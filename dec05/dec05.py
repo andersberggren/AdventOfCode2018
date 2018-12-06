@@ -1,3 +1,5 @@
+import re
+
 #############
 # Functions #
 #############
@@ -11,9 +13,7 @@ def getReducedPolymer(polymer):
 		unitA = polymer[i]
 		unitB = polymer[i+1]
 		if unitA.lower() == unitB.lower() and unitA != unitB:
-			#print("Unit {} and {} can be reduced!".format(unitA, unitB))
 			polymer = polymer[:i] + polymer[i+2:]
-			print("Polymer size: {size}, i: {i}, removed {unit}".format(size=len(polymer), i=i, unit=unitA.upper()))
 			if i > 0:
 				i -= 1
 		else:
@@ -24,8 +24,16 @@ def getReducedPolymer(polymer):
 # Main #
 ########
 polymer = getPolymerFromFile("input05")
-#polymer = "dabAcCaCBAcCcaDA"
-print("Initial size: {}".format(len(polymer)))
-polymer = getReducedPolymer(polymer)
-print("Size after reduction: {}".format(len(polymer)))
-print("Answer to part 1: {}".format(polymer))
+
+# Part 1
+reducedPolymer = getReducedPolymer(polymer)
+print("Size after reduction: {}".format(len(reducedPolymer)))
+
+# Part 2
+charToSize = {}
+for char in "abcdefghijklmnopqrstuvwxyz":
+	candidatePolymer = re.sub(char, "", reducedPolymer, flags=re.IGNORECASE)
+	candidatePolymer = getReducedPolymer(candidatePolymer)
+	charToSize[char] = len(candidatePolymer)
+(char, size) = sorted(charToSize.items(), key=lambda item: item[1])[0]
+print("Remove {char} to reduce the size to {size}".format(char=char.upper(), size=size))
