@@ -6,6 +6,8 @@ import re
 class Step:
 	def __init__(self, id):
 		self.id = id
+		# timeLeft is only used in part 2
+		self.timeLeft = 61 + ord(id) - ord('A')
 		self.isCompleted = False
 		self.dependees = set()
 
@@ -13,18 +15,19 @@ class Step:
 	def addDependee(self, dependee):
 		self.dependees.add(dependee)
 
-	# Returns True iff all dependees are already completed.
-	def canBeCompleted(self):
-		return all(x.isCompleted for x in self.dependees)
+	def doOneSecondOfWork(self):
+		self.timeLeft -= 1
+		if self.timeLeft == 0:
+			self.isCompleted = True
 
-	def toString(self):
-		s = "Step[id={id},dependees={dependees}]"
-		return s.format(id=self.id, dependees="".join([x.id for x in self.dependees]))
+	# Returns True iff all dependees are already completed.
+	def canBeWorkedOn(self):
+		return all(x.isCompleted for x in self.dependees)
 
 #############
 # Functions #
 #############
-# Reads a file and returns a Steps (with dependencies to other Steps).
+# Reads a file and returns a list of Steps (with dependencies to other Steps).
 def getStepsFromFile(fileName):
 	# Map from ID to Step
 	steps = {}
@@ -42,16 +45,36 @@ def getStepsFromFile(fileName):
 				raise RuntimeError("Line in file has incorrect format: {}".format(line))
 	return steps.values()
 
+def getStepsThatCanBeWorkedOn(steps):
+	return [step for step in steps if step.canBeWorkedOn() and not step.isCompleted]
+
+def findCompletionOrderPart1(steps):
+	solution = ""
+	while not all([step.isCompleted for step in steps]):
+		nextStep = sorted(getStepsThatCanBeWorkedOn(steps), key=lambda step: step.id)[0]
+		solution += nextStep.id
+		nextStep.isCompleted = True
+	return solution
+
+def findCompletionTimePart2(steps, numberOfWorkers):
+	timeSpent = 0
+	while not all([step.isCompleted for step in steps]):
+		candidateSteps = getStepsThatCanBeWorkedOn(steps)
+		for i in range(min(len(candidateSteps), numberOfWorkers)):
+			step = candidateSteps[i]
+			step.doOneSecondOfWork()
+		timeSpent += 1
+	return timeSpent
+
 ########
 # Main #
 ########
+# Part 1
 steps = getStepsFromFile("input07")
-#[print(step.toString()) for step in steps]
+solution = findCompletionOrderPart1(steps)
+print("Part 1: Complete the steps in this order: {}".format(solution))
 
-solution = ""
-while not all([step.isCompleted for step in steps]):
-	candidateSteps = [step for step in steps if step.canBeCompleted() and not step.isCompleted]
-	nextStep = sorted(candidateSteps, key=lambda step: step.id)[0]
-	solution += nextStep.id
-	nextStep.isCompleted = True
-print("Complete the steps in this order: {}".format(solution))
+# Part 2
+steps = getStepsFromFile("input07")
+time = findCompletionTimePart2(steps, 5)
+print("Part 2: Takes {} seconds to complete".format(time))
