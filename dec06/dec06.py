@@ -9,9 +9,6 @@ class PointOfInterest:
 		self.x = int(x)
 		self.y = int(y)
 
-	def toString(self):
-		return "PointOfInterest[id={id},x={x},y={y}]".format(id=self.id, x=self.x, y=self.y)
-
 	@staticmethod
 	def createFromString(s):
 		# TODO Is it necessary to specift PointOfInterest here?
@@ -90,12 +87,39 @@ def findLargestNonInfiniteArea(grid, poiSetNonInfinite):
 				areaSizes[closestPOI] = 1
 	return sorted(areaSizes.items(), key=lambda item: item[1], reverse=True)[0]
 
+def getSizeOfAreaWithTotalDistanceLessThan(grid, poiSet, maxTotalDistance):
+	areaSize = 0
+	# TODO 4th copy-paste of this. Time to refactor and not repeat myself.
+	minX = min([x for (x,y) in grid])
+	maxX = max([x for (x,y) in grid])
+	minY = min([y for (x,y) in grid])
+	maxY = max([y for (x,y) in grid])
+	for x in range(minX, maxX+1):
+		for y in range(minY, maxY+1):
+			if getTotalDistance(x, y, poiSet) < maxTotalDistance:
+				areaSize += 1
+				# TODO Don't repeat this "on edge"-condition.
+				if x in [minX, maxX] or y in [minY, maxY]:
+					raise RuntimeError("Unexpected: Coordinate on edge of grid satisfies maxTotalDistance-condition. The implementation will probably not work.")
+	return areaSize
+
+def getTotalDistance(x, y, poiSet):
+	totalDistance = 0
+	for poi in poiSet:
+		totalDistance += abs(x - poi.x) + abs(y - poi.y)
+	return totalDistance
+
 ########
 # Main #
 ########
 poiSet = getPointsOfInterestFromFile("input06")
 grid = createGrid(poiSet)
+
+# Part 1
 poiSetNonInfinite = getPointsOfInterestWithNonInfiniteAreas(grid, poiSet)
-print("{} POIs total. {} with non-infinite area.".format(len(poiSet), len(poiSetNonInfinite)))
 (poi, areaSize) = findLargestNonInfiniteArea(grid, poiSetNonInfinite)
 print("POI #{id} has the largest non-infinite area. Size is {size}".format(id=poi.id, size=areaSize))
+
+# Part 2
+areaSize = getSizeOfAreaWithTotalDistanceLessThan(grid, poiSet, 10000)
+print("Size of region with total distance to all POIs < 10000: {}".format(areaSize))
