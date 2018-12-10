@@ -24,8 +24,8 @@ def createLightFromString(s):
 	# String format example: position=<-42528,  42920> velocity=< 4, -4>
 	match = re.match("position=< *(-?\d+), *(-?\d+)> velocity=< *(-?\d+), *(-?\d+)>", s)
 	if match:
-		position = [int(match.group(1)), int(match.group(2))]
-		velocity = [int(match.group(3)), int(match.group(4))]
+		position = (int(match.group(1)), int(match.group(2)))
+		velocity = (int(match.group(3)), int(match.group(4)))
 	else:
 		raise ValueError("String has invalid format: {}".format(s))
 	return Light(position, velocity)
