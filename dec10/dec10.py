@@ -3,7 +3,7 @@ import re
 #########
 # Class #
 #########
-class Point:
+class Light:
 	# position  (x,y)-position
 	# velocity  (x,y)-velocity
 	def __init__(self, position, velocity):
@@ -22,53 +22,57 @@ class Point:
 			velocity = (int(match.group(3)), int(match.group(4)))
 		else:
 			raise ValueError("String has invalid format: {}".format(s))
-		return Point(position, velocity)
+		return Light(position, velocity)
 
 #############
 # Functions #
 #############
-def getPointListFromFile(fileName):
+def getLightListFromFile(fileName):
 	with open(fileName) as f:
-		return [Point.createFromString(line.strip()) for line in f.readlines()]
+		return [Light.createFromString(line.strip()) for line in f.readlines()]
 
-def getSpread(points):
-	maxX = max([p.position[0] for p in points])
-	minX = min([p.position[0] for p in points])
-	maxY = max([p.position[1] for p in points])
-	minY = min([p.position[1] for p in points])
-	xSpread = abs(maxX-minX)
-	ySpread = abs(maxY-minY)
-	return (xSpread, ySpread)
+# Returns number of seconds required for the lights to group together.
+def updateUntilLightsAreGroupedTogether(lights):
+	time = 0
+	while not areGroupedTogether(lights):
+		[light.update() for light in lights]
+		time += 1
+	return time
 
-def printPoints(points):
-	points = set([p.position for p in points])
-	maxX = max([p[0] for p in points])
-	minX = min([p[0] for p in points])
-	maxY = max([p[1] for p in points])
-	minY = min([p[1] for p in points])
-	print("Printing light...")
+def areGroupedTogether(lights):
+	positions = set([light.position for light in lights])
+	for position in positions:
+		if not hasNeighbor(position, positions):
+			return False
+	return True
+
+def hasNeighbor(position, positions):
+	x = position[0]
+	y = position[1]
+	for xIter in range(x-1, x+2):
+		for yIter in range(y-1, y+2):
+			if not (xIter == x and yIter == y) and (xIter,yIter) in positions:
+				return True
+	return False
+
+def printLights(lights):
+	positions = set([light.position for light in lights])
+	minX = min([p[0] for p in positions])
+	maxX = max([p[0] for p in positions])
+	minY = min([p[1] for p in positions])
+	maxY = max([p[1] for p in positions])
 	for y in range(minY, maxY+1):
 		for x in range(minX, maxX+1):
-			if (x,y) in points:
+			if (x,y) in positions:
 				print("#", end="")
 			else:
-				print(".", end="")
+				print(" ", end="")
 		print("")
 
 ########
 # Main #
 ########
-points = getPointListFromFile("input10")
-seconds = 0
-minSpread = None
-currentSpread = None
-while minSpread is None or currentSpread <= minSpread:
-	[p.update() for p in points]
-	seconds += 1
-	(x, y) = getSpread(points)
-	print("X spread: {x}, Y spread: {y}, seconds={s}".format(x=x, y=y, s=seconds))
-	currentSpread = y
-	if minSpread is None or currentSpread < minSpread:
-		minSpread = currentSpread
-	if currentSpread < 20:
-		printPoints(points)
+lights = getLightListFromFile("input10")
+time = updateUntilLightsAreGroupedTogether(lights)
+print("After {} seconds, the lights are grouped together. Message:".format(time))
+printLights(lights)
