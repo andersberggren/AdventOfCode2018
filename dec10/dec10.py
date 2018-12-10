@@ -4,8 +4,8 @@ import re
 # Class #
 #########
 class Light:
-	# position  (x,y)-position
-	# velocity  (x,y)-velocity
+	# position  Tuple with (x,y)-position
+	# velocity  Tuple with (x,y)-velocity
 	def __init__(self, position, velocity):
 		self.position = position
 		self.velocity = velocity
@@ -13,29 +13,29 @@ class Light:
 	def update(self):
 		self.position = (self.position[0]+self.velocity[0], self.position[1]+self.velocity[1])
 
-	@staticmethod
-	def createFromString(s):
-		# String format example: position=<-42528,  42920> velocity=< 4, -4>
-		match = re.match("position=< *(-?\d+), *(-?\d+)> velocity=< *(-?\d+), *(-?\d+)>", s)
-		if match:
-			position = (int(match.group(1)), int(match.group(2)))
-			velocity = (int(match.group(3)), int(match.group(4)))
-		else:
-			raise ValueError("String has invalid format: {}".format(s))
-		return Light(position, velocity)
-
 #############
 # Functions #
 #############
 def getLightListFromFile(fileName):
 	with open(fileName) as f:
-		return [Light.createFromString(line.strip()) for line in f.readlines()]
+		return [createLightFromString(line.strip()) for line in f.readlines()]
+
+def createLightFromString(s):
+	# String format example: position=<-42528,  42920> velocity=< 4, -4>
+	match = re.match("position=< *(-?\d+), *(-?\d+)> velocity=< *(-?\d+), *(-?\d+)>", s)
+	if match:
+		position = [int(match.group(1)), int(match.group(2))]
+		velocity = [int(match.group(3)), int(match.group(4))]
+	else:
+		raise ValueError("String has invalid format: {}".format(s))
+	return Light(position, velocity)
 
 # Returns number of seconds required for the lights to group together.
 def updateUntilLightsAreGroupedTogether(lights):
 	time = 0
 	while not areGroupedTogether(lights):
-		[light.update() for light in lights]
+		for light in lights:
+			light.update()
 		time += 1
 	return time
 
