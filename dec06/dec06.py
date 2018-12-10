@@ -4,18 +4,11 @@
 class PointOfInterest:
 	nextId = 0
 
-	def __init__(self, id, x, y):
-		self.id = id
+	def __init__(self, x, y):
+		self.id = PointOfInterest.nextId
+		PointOfInterest.nextId += 1
 		self.x = int(x)
 		self.y = int(y)
-
-	@staticmethod
-	def createFromString(s):
-		id = PointOfInterest.nextId
-		PointOfInterest.nextId += 1
-		x = s.split(",")[0].strip()
-		y = s.split(",")[1].strip()
-		return PointOfInterest(id, x, y)
 
 class Grid:
 	def __init__(self, poiSet):
@@ -49,7 +42,6 @@ class Grid:
 		poiSetNonInfinite = self.getPointsOfInterestWithNonInfiniteArea()
 		poiToAreaSize = {}
 		for items in self.coordToClosestPOI.items():
-			(x, y) = items[0]
 			closestPOI = items[1]
 			if closestPOI in poiSetNonInfinite:
 				try:
@@ -71,22 +63,17 @@ class Grid:
 	# Returns the number of squares where the total manhattan distance to all
 	# POIs are less than maxTotalDistance.
 	def getSizeOfAreaWithTotalDistanceLessThan(self, maxTotalDistance):
-		areaSize = 0
-		for (x, y) in self.getEdgeCoordinates():
-			if self.getTotalDistance(x, y) < maxTotalDistance:
+		for (x,y) in self.getEdgeCoordinates():
+			if self.getTotalDistance(x,y) < maxTotalDistance:
 				raise RuntimeError("Unexpected: Coordinate on edge of grid satisfies the "
-						+ "maxTotalDistance-condition. The implementation will probably not work.")
-		for x in self.getXRange():
-			for y in self.getYRange():
-				if self.getTotalDistance(x, y) < maxTotalDistance:
-					areaSize += 1
-		return areaSize
+						+ "maxTotalDistance-condition. The implementation will not work if there "
+						+ "are coordinates outside the grid that satisfies the condition.")
+		allGridCoords = [(x,y) for x in self.getXRange() for y in self.getYRange()]
+		return len([1 for (x,y) in allGridCoords if self.getTotalDistance(x,y) < maxTotalDistance])
 
+	# Returns the sum of the distances from (x,y) to each PointOfInterest.
 	def getTotalDistance(self, x, y):
-		totalDistance = 0
-		for poi in self.poiSet:
-			totalDistance += getManhattanDistance((x,y), (poi.x,poi.y))
-		return totalDistance
+		return sum([getManhattanDistance((x,y), (poi.x,poi.y)) for poi in self.poiSet])
 
 	def getXRange(self):
 		return range(self.minX, self.maxX+1)
@@ -105,10 +92,15 @@ class Grid:
 #############
 def getPointsOfInterestFromFile(fileName):
 	with open(fileName) as f:
-		return set([PointOfInterest.createFromString(line) for line in f.readlines()])
+		return set([createPointOfInterestFromString(line) for line in f.readlines()])
 
 def getManhattanDistance(coordinateA, coordinateB):
 	return abs(coordinateA[0] - coordinateB[0]) + abs(coordinateA[1] - coordinateB[1])
+
+def createPointOfInterestFromString(s):
+	x = s.split(",")[0].strip()
+	y = s.split(",")[1].strip()
+	return PointOfInterest(x, y)
 
 ########
 # Main #
@@ -117,7 +109,7 @@ grid = Grid(getPointsOfInterestFromFile("input06"))
 
 # Part 1
 (poi, areaSize) = grid.findLargestNonInfiniteArea()
-print("POI #{id} has the largest non-infinite area. Size is {size}".format(id=poi.id, size=areaSize))
+print("POI #{id} has the largest non-infinite area. Size: {size}".format(id=poi.id, size=areaSize))
 
 # Part 2
 maxTotalDistance = 10000
