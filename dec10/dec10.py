@@ -59,12 +59,14 @@ def printPoints(points):
 # Main #
 ########
 points = getPointListFromFile("input10")
+seconds = 0
 minSpread = None
 currentSpread = None
 while minSpread is None or currentSpread <= minSpread:
 	[p.update() for p in points]
+	seconds += 1
 	(x, y) = getSpread(points)
-	print("X spread: {x}, Y spread: {y}".format(x=x, y=y))
+	print("X spread: {x}, Y spread: {y}, seconds={s}".format(x=x, y=y, s=seconds))
 	currentSpread = y
 	if minSpread is None or currentSpread < minSpread:
 		minSpread = currentSpread
