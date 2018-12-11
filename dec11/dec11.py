@@ -75,17 +75,19 @@ def getLargestDivisorSmallerThanSelf(x):
 			largestDivisor = divisor
 	return largestDivisor
 
+def findLargestTotalPower(grid):
+	bestSoFar = None
+	for i in range(1, grid.size+1):
+		(coord, totalPower) = grid.getLargestTotalPower(i)
+		print("Among all {i}x{i} squares, the one at {coord} has the highest total power: {tp}".format(
+				i=i, coord=coord, tp=totalPower), flush=True)
+		if bestSoFar is None or totalPower > bestSoFar[2]:
+			bestSoFar = (coord, i, totalPower)
+		print("So far, the {size}x{size} square at {coord} has the highest total power: {tp}".format(
+				size=bestSoFar[1], coord=bestSoFar[0], tp=bestSoFar[2]), flush=True)
+
 ########
 # Main #
 ########
-grid = Grid(300, 1308)
-
-bestSoFar = None
-for i in range(1, grid.size+1):
-	(coord, totalPower) = grid.getLargestTotalPower(i)
-	print("Among all {i}x{i} squares, the one at {coord} has the highest total power: {tp}".format(
-			i=i, coord=coord, tp=totalPower), flush=True)
-	if bestSoFar is None or totalPower > bestSoFar[2]:
-		bestSoFar = (coord, i, totalPower)
-	print("So far, the {size}x{size} square at {coord} has the highest total power: {tp}".format(
-			size=bestSoFar[1], coord=bestSoFar[0], tp=bestSoFar[2]), flush=True)
+if __name__ == '__main__':
+	findLargestTotalPower(Grid(300, 1308))
