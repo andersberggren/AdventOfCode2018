@@ -3,29 +3,29 @@ import re
 #############
 # Functions #
 #############
-# Returns (initialState, spreadPatterns), where:
-# - initialState is a set of integers, representing the indices of plants.
+# Returns (initialPlants, spreadPatterns), where:
+# - initialPlants is a set of integers, representing the indices of pots with plants.
 # - spreadPatterns is a set of strings, representing the patterns that lead to
 #   a plant next generation.
-def getInitialStateAndSpreadPatternsFromFile(fileName):
-	initialState = None
+def getInitialPlantsAndSpreadPatternsFromFile(fileName):
+	initialPlants = None
 	spreadPatterns = set()
 	with open(fileName) as f:
 		for line in f.readlines():
-			matchInitialState =  re.match("initial state: ([#.]+)$", line)
+			matchInitialPlants =  re.match("initial state: ([#.]+)$", line)
 			matchSpreadPattern = re.match("([#.]{5}) => #", line)
-			if matchInitialState:
-				initialState = getInitialState(matchInitialState.group(1))
+			if matchInitialPlants:
+				initialPlants = getInitialPlants(matchInitialPlants.group(1))
 			elif matchSpreadPattern:
 				spreadPatterns.add(matchSpreadPattern.group(1))
-	return (initialState, spreadPatterns)
+	return (initialPlants, spreadPatterns)
 
-def getInitialState(initialStateAsString):
-	initialState = set()
-	for i in range(len(initialStateAsString)):
-		if initialStateAsString[i] == "#":
-			initialState.add(i)
-	return initialState
+def getInitialPlants(initialPlantsAsString):
+	initialPlants = set()
+	for i in range(len(initialPlantsAsString)):
+		if initialPlantsAsString[i] == "#":
+			initialPlants.add(i)
+	return initialPlants
 
 def getNextGenerationOfPlants(plantsCurrentGeneration, spreadPatterns):
 	plantsNextGeneration = set()
@@ -50,12 +50,32 @@ def getPatternForPlant(plants, plantIndex):
 ########
 # Main #
 ########
-(plants, spreadPatterns) = getInitialStateAndSpreadPatternsFromFile("input12")
+(plants, spreadPatterns) = getInitialPlantsAndSpreadPatternsFromFile("input12")
 
 #print("Plants at {}".format(sorted(plants)))
 #print("Spread patterns:")
 #[print(pattern) for pattern in sorted(spreadPatterns)]
-
-for i in range(20):
+generationToPlants = {0: plants}
+numberOfGenerations = 100
+for i in range(1, numberOfGenerations+1):
 	plants = getNextGenerationOfPlants(plants, spreadPatterns)
-print(sum(plants))
+	generationToPlants[i] = plants
+	print("After {gen} generations, the sum of indices of pots with plants is {sum}".format(
+			gen=i, sum=sum(plants)))
+
+allPotsThatHasContainedAPlant = set()
+for plants in generationToPlants.values():
+	[allPotsThatHasContainedAPlant.add(x) for x in plants]
+minIndex = min(allPotsThatHasContainedAPlant)
+maxIndex = max(allPotsThatHasContainedAPlant)
+
+print("Min index: {}".format(minIndex))
+for generationIndex in range(0, max(generationToPlants.keys())+1):
+	plants = generationToPlants[generationIndex]
+	s = ""
+	for i in range(minIndex, maxIndex+1):
+		if i in plants:
+			s += "#"
+		else:
+			s += "."
+	print(s)
