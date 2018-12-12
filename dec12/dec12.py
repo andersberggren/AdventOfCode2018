@@ -4,7 +4,8 @@ import re
 # Classes #
 ###########
 class Generation:
-	# index  The index of this generation (0, 1, 2, ...)
+	# Arguments:
+	# index            The index of this generation (0, 1, 2, ...)
 	# plants           A set of integers, representing the indices of pots with plants.
 	# spreadPatterns   A set of strings, representing the patterns that
 	#                  lead to a plant next generation.
@@ -21,7 +22,7 @@ class Generation:
 		newPlants = set([i for i in indexRange if self.getPatternForPot(i) in self.spreadPatterns])
 		return Generation(self.index+1, newPlants, self.spreadPatterns)
 
-	# Returns a string with the pattern around this pot.
+	# Returns a string with the pattern around the pot at potIndex.
 	def getPatternForPot(self, potIndex):
 		pattern = ""
 		for i in range(potIndex-2, potIndex+3):
