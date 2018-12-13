@@ -1,18 +1,79 @@
 ###########
 # Classes #
 ###########
+class Direction:
+	left  = (-1,  0)
+	right = ( 1,  0)
+	up    = ( 0, -1)
+	down  = ( 0,  1)
+	all = [left, right, up, down]
+	horizontal = [left, right]
+	vertical = [up, down]
+
+	@staticmethod
+	def getOppositeDirection(direction):
+		return (-direction[0], -direction[1])
+
+	@staticmethod
+	def getDirectionToTheLeft(direction):
+		return (direction[1], -direction[0])
+
+	@staticmethod
+	def getDirectionToTheRight(direction):
+		return (-direction[1], direction[0])
+
+	@staticmethod
+	def getSymbol(directions):
+		if all([d in directions for d in Direction.all]):
+			return "+"
+		elif all([d in directions for d in Direction.horizontal]):
+			return "-"
+		elif all([d in directions for d in Direction.vertical]):
+			return "|"
+		elif all([d in directions for d in [Direction.left, Direction.up]]) \
+				or all([d in directions for d in [Direction.right, Direction.down]]):
+			return "/"
+		elif all([d in directions for d in [Direction.left, Direction.down]]) \
+				or all([d in directions for d in [Direction.right, Direction.up]]):
+			return "\\"
+		else:
+			raise ValueError("Unknown track section. Directions: {}".format(directions))
+
+	@staticmethod
+	def isIntersection(directions):
+		return all([d in directions for d in Direction.all])
+
 class Cart:
+	symbolToDirection = {
+		"<": Direction.left,
+		">": Direction.right,
+		"^": Direction.up,
+		"v": Direction.down
+	}
+	directionToSymbol = {}
+	for (symbol, direction) in symbolToDirection.items():
+		directionToSymbol[direction] = symbol
+
+	# Instance variables:
+	# position     (x,y)-position.
+	# direction    (x,y), where one is 0, and the other is -1 or +1.
+	# futureTurns  A list of functions that can be called to turn the Cart.
+	#              The first function in the list is called, and then placed last in the list.
 	def __init__(self, startPosition, startDirection):
 		self.position = startPosition
 		self.direction = startDirection
 		self.futureTurns = [self.turnLeft, self.turnNot, self.turnRight]
 
+	# Updates the carts position, by moving it one step in the direction it is currently facing.
 	def move(self):
-		oldPosition = self.position
 		self.position = (self.position[0]+self.direction[0], self.position[1]+self.direction[1])
 
+	# Turns the cart, according to the first applicable rule below:
+	# 1. If the cart is at an intersection, it turns according to self.futureTurns
+	# 2. If the cart can continue to move forward, it keeps its current direction.
+	# 3. The only remaining option is to turn left or right, along the track.
 	def turn(self, directions):
-		if isIntersection(directions):
+		if Direction.isIntersection(directions):
 			nextTurn = self.futureTurns.pop(0)
 			self.futureTurns.append(nextTurn)
 			nextTurn()
@@ -24,10 +85,10 @@ class Cart:
 			self.turnRight()
 
 	def turnLeft(self):
-		self.direction = (self.direction[1], -self.direction[0])
+		self.direction = Direction.getDirectionToTheLeft(self.direction)
 
 	def turnRight(self):
-		self.direction = (-self.direction[1], self.direction[0])
+		self.direction = Direction.getDirectionToTheRight(self.direction)
 
 	def turnNot(self):
 		pass
@@ -35,103 +96,70 @@ class Cart:
 	def __repr__(self):
 		return "Cart[position={p},direction={d}]".format(p=self.position, d=self.direction)
 
-	def __cmp__(self, other):
-		if self.direction[1] < other.direction[1]:
-			return -1
-		elif self.direction[1] > other.direction[1]:
-			return 1
+	def __lt__(self, other):
+		if self.position[1] < other.position[1]:
+			return True
+		elif self.position[1] > other.position[1]:
+			return False
 		else:
-			return self.direction[0] - other.direction[0]
+			return self.position[0] < other.position[0]
 
 	@staticmethod
-	def createFromString(startPosition, s):
-		if s == "<":
-			return Cart(startPosition, Direction.left)
-		elif s == ">":
-			return Cart(startPosition, Direction.right)
-		elif s == "^":
-			return Cart(startPosition, Direction.up)
-		elif s == "v":
-			return Cart(startPosition, Direction.down)
-		else:
-			raise ValueError("Invalid cart: {}".format(s))
-
-	@staticmethod
-	def cartSort(cart):
-		return (cart.position[1], cart.position[0])
-
-class Direction:
-	@staticmethod
-	def getDirectionToTheLeft(direction):
-		return (direction[1], -direction[0])
-
-	@staticmethod
-	def getDirectionToTheRight(direction):
-		return (-direction[1], direction[0])
-
-Direction.left  = (-1,  0)
-Direction.right = ( 1,  0)
-Direction.up    = ( 0, -1)
-Direction.down  = ( 0,  1)
-Direction.all = [Direction.left, Direction.right, Direction.up, Direction.down]
-Direction.horizontal = [Direction.left, Direction.right]
-Direction.vertical = [Direction.up, Direction.down]
+	def createCart(startPosition, symbol):
+		return Cart(startPosition, Cart.symbolToDirection[symbol])
 
 class TrackSystem:
 	def __init__(self):
 		self.grid = {}
 		self.carts = []
 
-	def addTrackAndOrCart(self, x, y, type):
+	def addTrackAndOrCart(self, x, y, symbol):
 		position = (x,y)
 		positionToTheLeft = (x-1,y)
 		directions = set()
-		if type == "|":
+		if symbol == "|":
 			directions.add(Direction.up)
 			directions.add(Direction.down)
-		elif type == "-":
+		elif symbol == "-":
 			directions.add(Direction.left)
 			directions.add(Direction.right)
-		elif type == "/":
+		elif symbol == "/":
 			if positionToTheLeft in self.grid and Direction.right in self.grid[positionToTheLeft]:
 				directions.add(Direction.left)
 				directions.add(Direction.up)
 			else:
 				directions.add(Direction.right)
 				directions.add(Direction.down)
-		elif type == "\\":
+		elif symbol == "\\":
 			if positionToTheLeft in self.grid and Direction.right in self.grid[positionToTheLeft]:
 				directions.add(Direction.left)
 				directions.add(Direction.down)
 			else:
 				directions.add(Direction.right)
 				directions.add(Direction.up)
-		elif type == "+":
+		elif symbol == "+":
 			directions.add(Direction.left)
 			directions.add(Direction.right)
 			directions.add(Direction.up)
 			directions.add(Direction.down)
-		elif any([type == cartChar for cartChar in ["<", ">", "^", "v"]]):
-			cart = Cart.createFromString(position, type)
+		else:
+			cart = Cart.createCart(position, symbol)
 			self.carts.append(cart)
 			directions.add(cart.direction)
-			directions.add((-cart.direction[0], -cart.direction[1]))
-		else:
-			raise ValueError("Invalid track symbol at ({},{}): {}".format(x, y, type))
+			directions.add(Direction.getOppositeDirection(cart.direction))
 		self.grid[(x,y)] = directions
 
-	# Move all carts one step.
+	# Moves all carts one step.
 	def tick(self):
-		hasCollided = False
-		for cart in sorted(self.carts, key=Cart.cartSort):
+		for cart in sorted(self.carts):
 			cart.move()
-			if len(set([c.position for c in self.carts])) != len(self.carts):
-				hasCollided = True
+			numberOfCarts = len(self.carts)
+			numberOfPositions = len(set([c.position for c in self.carts]))
+			if numberOfPositions < numberOfCarts:
 				print("Collision at {}".format(cart.position))
 				self.removeCartsAt(cart.position)
 			else:
 				cart.turn(self.grid[cart.position])
-		return hasCollided
 
 	def removeCartsAt(self, collisionPosition):
 		self.carts = [cart for cart in self.carts if cart.position != collisionPosition]
@@ -151,34 +179,17 @@ def getTrackSystemFromFile(fileName):
 					trackSystem.addTrackAndOrCart(x, y, char)
 	return trackSystem
 
-def isIntersection(directions):
-	return all([d in directions for d in Direction.all])
-
 def printTrackSystem(trackSystem):
-	maxX = max([coord[0] for coord in trackSystem.grid])
-	maxY = max([coord[1] for coord in trackSystem.grid])
+	maxX = max([position[0] for position in trackSystem.grid])
+	maxY = max([position[1] for position in trackSystem.grid])
 	for y in range(maxY+1):
 		line = ""
 		for x in range(maxX+1):
-			if (x,y) in [cart.position for cart in trackSystem.carts]:
-				line += "C"
+			cartsHere = [cart for cart in trackSystem.carts if cart.position == (x,y)]
+			if cartsHere:
+				line += Cart.directionToSymbol[cartsHere[0].direction]
 			elif (x,y) in trackSystem.grid:
-				directions = trackSystem.grid[(x,y)]
-				if all([d in directions for d in Direction.all]):
-					line += "+"
-				elif all([d in directions for d in Direction.horizontal]):
-					line += "-"
-				elif all([d in directions for d in Direction.vertical]):
-					line += "|"
-				elif all([d in directions for d in [Direction.left, Direction.up]]) \
-						or all([d in directions for d in [Direction.right, Direction.down]]):
-					line += "/"
-				elif all([d in directions for d in [Direction.left, Direction.down]]) \
-						or all([d in directions for d in [Direction.right, Direction.up]]):
-					line += "\\"
-				else:
-					raise ValueError("Unknown track at ({x},{y}), Directions: {dir}".format(
-							x=x, y=y, dir=directions))
+				line += Direction.getSymbol(trackSystem.grid[(x,y)])
 			else:
 				line += " "
 		print(line)
@@ -187,8 +198,6 @@ def printTrackSystem(trackSystem):
 # Main #
 ########
 trackSystem = getTrackSystemFromFile("input13")
-printTrackSystem(trackSystem)
-
 while len(trackSystem.carts) > 1:
 	trackSystem.tick()
 print("Last cart remaining is at {}".format(trackSystem.carts[0].position))
