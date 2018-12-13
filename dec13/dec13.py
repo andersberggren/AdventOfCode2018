@@ -10,7 +10,6 @@ class Cart:
 	def move(self):
 		oldPosition = self.position
 		self.position = (self.position[0]+self.direction[0], self.position[1]+self.direction[1])
-		print("Cart moved from {old} to {new}".format(old=oldPosition, new=self.position))
 
 	def turn(self, directions):
 		if isIntersection(directions):
@@ -123,11 +122,19 @@ class TrackSystem:
 
 	# Move all carts one step.
 	def tick(self):
+		hasCollided = False
 		for cart in sorted(self.carts, key=Cart.cartSort):
 			cart.move()
 			if len(set([c.position for c in self.carts])) != len(self.carts):
-				raise RuntimeError("Collision at {}".format(cart.position))
-			cart.turn(self.grid[cart.position])
+				hasCollided = True
+				print("Collision at {}".format(cart.position))
+				self.removeCartsAt(cart.position)
+			else:
+				cart.turn(self.grid[cart.position])
+		return hasCollided
+
+	def removeCartsAt(self, collisionPosition):
+		self.carts = [cart for cart in self.carts if cart.position != collisionPosition]
 
 #############
 # Functions #
@@ -182,20 +189,6 @@ def printTrackSystem(trackSystem):
 trackSystem = getTrackSystemFromFile("input13")
 printTrackSystem(trackSystem)
 
-for i in range(1000):
-	print("Tick {}".format(i))
+while len(trackSystem.carts) > 1:
 	trackSystem.tick()
-#trackSystem.carts = [x for x in reversed(trackSystem.carts)]
-#print("Carts as-is:")
-#for cart in trackSystem.carts:
-#	print(cart)
-#print("Carts sorted:")
-#for cart in sorted(trackSystem.carts, key=Cart.cartSort):
-#	print(cart)
-
-# TODO
-# The track system is a grid. Each square is either empty, or one of:  |-/\+
-# Cart: Has current position (x,y) and direction (up, right, down, left).
-#       Can move forward and turn (because of intersection, or track turning).
-#       Must keep track of direction of next turn at intersection (cycle between left, straight, right)
-# Tick: Update each cart by moving it one unit. Carts on the top row move first (from left to right).
+print("Last cart remaining is at {}".format(trackSystem.carts[0].position))
