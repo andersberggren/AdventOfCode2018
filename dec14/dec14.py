@@ -28,8 +28,7 @@ class ChocolateLaboratory:
 def part1(lab, numberOfRecipes, answerSize):
 	while len(lab.recipeScores) < numberOfRecipes+answerSize:
 		lab.update()
-	answer = "".join([str(d) for d in lab.recipeScores[numberOfRecipes:numberOfRecipes+answerSize]])
-	print("Part 1. Digit sequence after {n} recipes: {a}".format(n=numberOfRecipes, a=answer))
+	return "".join([str(d) for d in lab.recipeScores[numberOfRecipes:numberOfRecipes+answerSize]])
 
 # Arguments:
 #   lab            The chocolate laboratory
@@ -43,8 +42,7 @@ def part2(lab, digitSequence):
 		for i in range(numberOfNewScores):
 			offset = len(lab.recipeScores) - len(digitSequence) - (numberOfNewScores-1) + i
 			if offset >= 0 and matchSubList(lab.recipeScores, digitSequence, offset):
-				print("Part 2. Digit sequence occurs after {answer} recipes".format(answer=offset))
-				return
+				return offset
 		if (len(lab.recipeScores) % 1000000) - numberOfNewScores < 0:
 			print("{: >11,} recipes created".format(len(lab.recipeScores)), flush=True)
 
@@ -60,8 +58,10 @@ def matchSubList(fullList, subList, offset):
 ########
 # Main #
 ########
-puzzleInput = "440231"
-answerSizePart1 = 10
-
-part1(ChocolateLaboratory(), int(puzzleInput), answerSizePart1)
-part2(ChocolateLaboratory(), [int(x) for x in puzzleInput])
+if __name__ == "__main__":
+	puzzleInput = "440231"
+	answerSizePart1 = 10
+	answer1 = part1(ChocolateLaboratory(), int(puzzleInput), answerSizePart1)
+	print("Part 1. Digit sequence after {n} recipes: {a}".format(n=puzzleInput, a=answer1))
+	answer2 = part2(ChocolateLaboratory(), [int(x) for x in puzzleInput])
+	print("Part 2. Digit sequence occurs after {} recipes".format(answer2))
