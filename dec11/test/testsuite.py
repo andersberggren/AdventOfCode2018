@@ -1,5 +1,5 @@
 import unittest
-import dec11
+from dec11 import dec11
 
 class TestSuite(unittest.TestCase):
 	# Test data for power level of a single cell:
