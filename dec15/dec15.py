@@ -31,28 +31,27 @@ class World:
 		positions = [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]
 		return [p for p in positions if p in self.allPositions]
 
-	def getAdjacentUnoccupiedSquares(self, position):
-		return [x for x in self.getAdjacentSquares(position) if self.isUnoccupied(x)]
+	def getAdjacentEmptySquares(self, position):
+		return [p for p in self.getAdjacentSquares(position) if self.isEmpty(p)]
 
 	def isCombatOver(self):
 		# Combat is over if there is only one creature type left
 		return len(set([creature.type for creature in self.positionToCreature.values()])) <= 1
 
-	def isUnoccupied(self, position):
+	def isEmpty(self, position):
 		return position in self.allPositions and position not in self.positionToCreature
 
 	def isReachable(self, positionFrom, positionTo):
 		evaluated = set()
-		leftToEvaluate = set(self.getAdjacentUnoccupiedSquares(positionFrom))
+		leftToEvaluate = set(self.getAdjacentEmptySquares(positionFrom))
 		while len(leftToEvaluate) > 0:
 			position = leftToEvaluate.pop()
 			if position == positionTo:
 				return True
-			else:
-				evaluated.add(position)
-				for adjPosition in self.getAdjacentUnoccupiedSquares(position):
-					if adjPosition not in evaluated:
-						leftToEvaluate.add(adjPosition)
+			evaluated.add(position)
+			for adjacentPosition in self.getAdjacentEmptySquares(position):
+				if adjacentPosition not in evaluated:
+					leftToEvaluate.add(adjacentPosition)
 		return False
 
 	def existsAdjacentEnemy(self, creature):
@@ -102,23 +101,28 @@ def doOneRoundOfActions(world):
 		# TODO Attack
 		# ...
 
+# Temp debug
+def printWorld(world):
+	maxX = max([pos[0] for pos in world.allPositions])
+	maxY = max([pos[1] for pos in world.allPositions])
+	for y in range(maxY+2):
+		for x in range(maxX+2):
+			position = (x,y)
+			symbol = "#"
+			if position in world.positionToCreature:
+				symbol = world.positionToCreature[position].type[0]
+			elif position in world.allPositions:
+				if world.isReachable((1,11), position):
+					symbol = "R"
+				else:
+					symbol = "."
+			print(symbol, end="")
+		print()
+
 ########
 # Main #
 ########
-world = readWorldFromFile("input15")
-
-maxX = max([pos[0] for pos in world.allPositions])
-maxY = max([pos[1] for pos in world.allPositions])
-for y in range(maxY+2):
-	for x in range(maxX+2):
-		position = (x,y)
-		symbol = "#"
-		if position in world.positionToCreature:
-			symbol = world.positionToCreature[position].type[0]
-		elif position in world.allPositions:
-			if world.isReachable((1,11), position):
-				symbol = "R"
-			else:
-				symbol = "."
-		print(symbol, end="")
+if __name__ == "__main__":
+	world = readWorldFromFile("input15")
 	print()
+	printWorld(world)
