@@ -1,6 +1,6 @@
 import unittest
 
-from dec15.dec15 import Creature, World
+from dec15.dec15 import Creature, World, UnreachableError
 
 class TestSuite(unittest.TestCase):
 	# ######
@@ -79,6 +79,16 @@ class TestSuite(unittest.TestCase):
 		self.assertEqual(len(squares), 2)
 		self.assertTrue((1,3) in squares)
 		self.assertTrue((2,2) in squares)
+
+	def test_world_getDistance(self):
+		self.assertEqual(self.world.getDistance((1,2), (2,2)), 1)
+		self.assertEqual(self.world.getDistance((2,3), (4,2)), 7)
+		self.assertEqual(self.world.getDistance((3,2), (3,5)), 5)
+		try:
+			self.world.getDistance((3,2), (1,3))
+			self.fail("Expected UnreachableError")
+		except UnreachableError:
+			pass
 
 	def test_world_isCombatOver(self):
 		self.assertFalse(self.world.isCombatOver())

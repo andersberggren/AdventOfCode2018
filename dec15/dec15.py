@@ -1,6 +1,9 @@
 ###########
 # Classes #
 ###########
+class UnreachableError(Exception):
+	pass
+
 # Elf or goblin
 class Creature:
 	def __init__(self, position, type):
@@ -33,6 +36,23 @@ class World:
 
 	def getAdjacentEmptySquares(self, position):
 		return [p for p in self.getAdjacentSquares(position) if self.isEmpty(p)]
+
+	def getDistance(self, positionFrom, positionTo):
+		visitedSquares = set([positionFrom])
+		positionsAtThisDistance = set([positionFrom])
+		distance = 0
+		while len(positionsAtThisDistance) > 0:
+			if positionTo in positionsAtThisDistance:
+				return distance
+			positionsAtNextDistance = set()
+			for position in positionsAtThisDistance:
+				for nextPosition in self.getAdjacentEmptySquares(position):
+					if nextPosition not in visitedSquares:
+						visitedSquares.add(position)
+						positionsAtNextDistance.add(nextPosition)
+			positionsAtThisDistance = positionsAtNextDistance
+			distance += 1
+		raise UnreachableError("No path from {f} to {t}".format(f=positionFrom, t=positionTo))
 
 	def isCombatOver(self):
 		# Combat is over if there is only one creature type left
@@ -96,8 +116,18 @@ def doOneRoundOfActions(world):
 		#   move one step towards the closest reachable square.
 		if not world.existsAdjacentEnemy(creature):
 			enemies = world.getEnemies(creature.type)
-			enemyAdjacentSquares = set([world.getAdjacentSquares(x.position) for x in enemies])
-			pass
+			targetSquares = set()
+			for enemy in enemies:
+				targetSquares |= world.getAdjacentEmptySquares(enemy.position)
+			targetSquares = set([x for x in targetSquares if world.isReachable(creature.position, x)])
+			distancesAndPositions = [(x, world.getDistance(creature.position, x)) for x in targetSquares]
+			minDistance = min([x[1] for x in distancesAndPositions])
+			closestSquares = [x[0] for x in distancesAndPositions if x[1] == minDistance]
+			sortKey = lambda x: (x[1], x[0])
+			if closestSquares:
+				closestSquare = sorted(closestSquares, key=sortKey)[0]
+				# TODO Find which square to move to
+
 		# TODO Attack
 		# ...
 
