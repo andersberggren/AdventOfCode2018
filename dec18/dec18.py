@@ -1,12 +1,11 @@
-import sys
-
 ###########
 # Classes #
 ###########
 class World:
-	def __init__(self, width, height):
+	def __init__(self, width, height, time=0):
 		self.width = width
 		self.height = height
+		self.time = time
 		self.trees = set()
 		self.lumberyards = set()
 
@@ -15,6 +14,25 @@ class World:
 
 	def addLumberyard(self, position):
 		self.lumberyards.add(position)
+
+	def getNextWorld(self):
+		nextWorld = World(self.width, self.height, self.time+1)
+		for y in range(self.height):
+			for x in range(self.width):
+				position = (x,y)
+				(nTrees, nLumberyards) = self.getNumberOfAdjacentTreesAndLumberyards(position)
+				if position in self.trees:
+					if nLumberyards >= 3:
+						nextWorld.addLumberyard(position)
+					else:
+						nextWorld.addTree(position)
+				elif position in self.lumberyards:
+					if nTrees >= 1 and nLumberyards >= 1:
+						nextWorld.addLumberyard(position)
+				else:
+					if nTrees >= 3:
+						nextWorld.addTree(position)
+		return nextWorld
 
 	# Returns (numberOfAdjacentTrees, numberOfAdjacentLumberyards)
 	def getNumberOfAdjacentTreesAndLumberyards(self, position):
@@ -30,15 +48,15 @@ class World:
 
 	def toString(self):
 		s = ""
-		for y in range(world.height):
-			for x in range(world.width):
+		for y in range(self.height):
+			for x in range(self.width):
 				position = (x,y)
-				symbol = "."
-				if position in world.trees:
-					symbol = "|"
-				elif position in world.lumberyards:
-					symbol = "#"
-				s += symbol
+				if position in self.trees:
+					s += "|"
+				elif position in self.lumberyards:
+					s += "#"
+				else:
+					s += "."
 			s += "\n"
 		return s
 
@@ -46,9 +64,11 @@ class World:
 # Functions #
 #############
 def readWorldFromFile(fileName):
-	world = World(50, 50)
 	with open(fileName) as f:
 		lines = f.readlines()
+		width = len(lines[0].rstrip())
+		height = len(lines)
+		world = World(width, height)
 		for y in range(len(lines)):
 			line = lines[y].rstrip()
 			for x in range(len(line)):
@@ -58,63 +78,34 @@ def readWorldFromFile(fileName):
 					world.addTree(position)
 				elif symbol == "#":
 					world.addLumberyard(position)
-				elif symbol == ".":
-					pass
-				else:
-					print("Invalid symbol at {pos}: {s}".format(pos=position, s=symbol))
-					sys.exit(1)
 	return world
 
-def getNextWorld(world):
-	nextWorld = World(world.width, world.height)
-	for y in range(world.height):
-		for x in range(world.width):
-			position = (x,y)
-			(nTrees, nLumberyards) = world.getNumberOfAdjacentTreesAndLumberyards(position)
-			#print("Position {p} has {t} trees and {l} lumberyards".format(
-			#		p=position, t=nTrees, l=nLumberyards))
-			if position in world.trees:
-				if nLumberyards >= 3:
-					nextWorld.addLumberyard(position)
-				else:
-					nextWorld.addTree(position)
-			elif position in world.lumberyards:
-				if nTrees >= 1 and nLumberyards >= 1:
-					nextWorld.addLumberyard(position)
-			else:
-				if nTrees >= 3:
-					nextWorld.addTree(position)
-	return nextWorld
+def getResourceValueOfWorldAfterTime(initialWorld, targetTime):
+	world = initialWorld
+	stringToWorld = {}
+	while world.time < targetTime:
+		worldAsString = world.toString()
+		if worldAsString in stringToWorld:
+			timeAtBeginningOfLoop = stringToWorld[worldAsString].time
+			loopSize = world.time - timeAtBeginningOfLoop
+			equivalentFinalTime = timeAtBeginningOfLoop + ((targetTime-world.time) % loopSize)
+			print("Pattern repeated at minute {a} and {b}".format(
+					a=timeAtBeginningOfLoop, b=world.time))
+			print("Resource value at minute {b} will be the same as at minute {a}".format(
+					a=equivalentFinalTime, b=targetTime))
+			finalWorld = next(w for w in stringToWorld.values() if w.time == equivalentFinalTime)
+			return finalWorld.getResourceValue()
+		stringToWorld[worldAsString] = world
+		world = world.getNextWorld()
+		print("Minute {m}, value {v}".format(m=world.time, v=world.getResourceValue()))
+	return world.getResourceValue()
 
 ########
 # Main #
 ########
-# Part 1
-world = readWorldFromFile("input18")
-for i in range(10):
-	world = getNextWorld(world)
-numberOfTrees = len(world.trees)
-numberOfLumberyards = len(world.lumberyards)
-print("Part 1: {}".format(numberOfTrees*numberOfLumberyards))
-
-# Part 2
-world = readWorldFromFile("input18")
-worldToTimeAndValue = {}
-targetTime = 1000000000
-for i in range(targetTime):
-	worldAsString = world.toString()
-	if worldAsString in worldToTimeAndValue:
-		print("Pattern repeated after {} minutes".format(i))
-		timeAtBeginningOfLoop = worldToTimeAndValue[worldAsString][0]
-		loopSize = i - timeAtBeginningOfLoop
-		timeLeft = (targetTime-i) % loopSize
-		finalTime = timeAtBeginningOfLoop + timeLeft
-		for (time, value) in worldToTimeAndValue.values():
-			if time == finalTime:
-				print("Part 2: {}".format(value))
-				sys.exit(0)
-		print("Couldn't find final value")
-		sys.exit(1)
-	else:
-		worldToTimeAndValue[worldAsString] = (i, world.getResourceValue())
-	world = getNextWorld(world)
+if __name__ == "__main__":
+	initialWorld = readWorldFromFile("input18")
+	part1Answer = getResourceValueOfWorldAfterTime(initialWorld, 10)
+	print("Part 1: {}".format(part1Answer))
+	part2Answer = getResourceValueOfWorldAfterTime(initialWorld, 1000000000)
+	print("Part 2: {}".format(part2Answer))
