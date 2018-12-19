@@ -25,6 +25,9 @@ class World:
 		numberOfLumberyards = len([p for p in positionsToCheck if p in self.lumberyards])
 		return (numberOfTrees, numberOfLumberyards)
 
+	def getResourceValue(self):
+		return len(self.trees) * len(self.lumberyards)
+
 	def toString(self):
 		s = ""
 		for y in range(world.height):
@@ -86,13 +89,32 @@ def getNextWorld(world):
 ########
 # Main #
 ########
+# Part 1
 world = readWorldFromFile("input18")
-print("Time passed: 0")
-print(world.toString(), end="")
 for i in range(10):
 	world = getNextWorld(world)
-	print("Time passed: {}".format(i+1))
-	print(world.toString(), end="")
 numberOfTrees = len(world.trees)
 numberOfLumberyards = len(world.lumberyards)
 print("Part 1: {}".format(numberOfTrees*numberOfLumberyards))
+
+# Part 2
+world = readWorldFromFile("input18")
+worldToTimeAndValue = {}
+targetTime = 1000000000
+for i in range(targetTime):
+	worldAsString = world.toString()
+	if worldAsString in worldToTimeAndValue:
+		print("Pattern repeated after {} minutes".format(i))
+		timeAtBeginningOfLoop = worldToTimeAndValue[worldAsString][0]
+		loopSize = i - timeAtBeginningOfLoop
+		timeLeft = (targetTime-i) % loopSize
+		finalTime = timeAtBeginningOfLoop + timeLeft
+		for (time, value) in worldToTimeAndValue.values():
+			if time == finalTime:
+				print("Part 2: {}".format(value))
+				sys.exit(0)
+		print("Couldn't find final value")
+		sys.exit(1)
+	else:
+		worldToTimeAndValue[worldAsString] = (i, world.getResourceValue())
+	world = getNextWorld(world)
