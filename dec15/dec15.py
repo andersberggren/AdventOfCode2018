@@ -1,3 +1,5 @@
+import sys
+
 ###########
 # Classes #
 ###########
@@ -11,6 +13,8 @@ class Creature:
 		self.type = type
 		self.attackPower = 3
 		self.hitPoints = 200
+		if type == "Elf":
+			self.attackPower = 10
 
 class World:
 	def __init__(self):
@@ -31,6 +35,9 @@ class World:
 	def attackCreature(self, attacker, defender):
 		defender.hitPoints -= attacker.attackPower
 		if defender.hitPoints <= 0:
+			if defender.type == "Elf":
+				print("An elf died! Unacceptable!")
+				sys.exit(0)
 			del self.positionToCreature[defender.position]
 
 	def getCreaturesSortedByExecutionOrder(self):
