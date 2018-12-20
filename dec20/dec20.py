@@ -131,12 +131,16 @@ def splitRegexOnBranches(regex):
 	regexList.append(regex)
 	return regexList
 
-def getDistanceToMostDistantRoom(facility):
+# Returns a dict, where key is room, and value is shortest distance.
+def getShortestDistanceToEveryRoom(facility):
+	roomToDistance = {}
 	startRoom = facility.positionToRoom[(0,0)]
 	visitedRooms = set([startRoom])
 	fringe = set([startRoom])
-	distance = 0
+	currentDistance = 0
 	while len(fringe) > 0:
+		for room in fringe:
+			roomToDistance[room] = currentDistance
 		newFringe = set()
 		for room in fringe:
 			for nextRoom in room.connectedRooms:
@@ -145,8 +149,8 @@ def getDistanceToMostDistantRoom(facility):
 					newFringe.add(nextRoom)
 		fringe = newFringe
 		if len(fringe) > 0:
-			distance += 1
-	return distance
+			currentDistance += 1
+	return roomToDistance
 
 ########
 # Main #
@@ -156,7 +160,10 @@ if __name__ == "__main__":
 	regex = readRegexFromFile("input20")
 	positions = set([(0,0)])
 	exploreFacilityAccordingToRegex(facility, regex, positions)
-	print("Number of rooms: {}".format(len(facility.positionToRoom)))
-	print("Shortest distance to most distant room: {}".format(
-		getDistanceToMostDistantRoom(facility)))
-
+	roomToDistance = getShortestDistanceToEveryRoom(facility)
+	# Part 1
+	maxDistance = max(x for x in roomToDistance.values())
+	print("Shortest distance to most distant room: {}".format(maxDistance))
+	# Part 2
+	numberOfRooms = len([x for x in roomToDistance.values() if x >= 1000])
+	print("Number of rooms requiring passing through at least 1000 doors: {}".format(numberOfRooms))
