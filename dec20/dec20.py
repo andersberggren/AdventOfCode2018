@@ -3,7 +3,7 @@
 ###########
 class Facility:
 	def __init__(self):
-		# Dict, where key is room position (x,y), and value is Room object.
+		# Dict. Key is room position (x,y). Value is Room object.
 		self.positionToRoom = {}
 		self.addRoom((0,0))
 
@@ -11,11 +11,15 @@ class Facility:
 		if position not in self.positionToRoom:
 			self.positionToRoom[position] = Room(position)
 
-	def addDoor(self, position, direction):
-		roomA = self.positionToRoom[position]
-		roomB = self.positionToRoom[(position[0]+direction[0], position[1]+direction[1])]
-		roomA.addConnection(roomB)
-		roomB.addConnection(roomA)
+	# Adds a door from room at "roomPosition" in direction "direction".
+	# Also adds the neighboring room if it doesn't already exist.
+	def addDoor(self, roomPosition, direction):
+		room = self.positionToRoom[roomPosition]
+		otherRoomPosition = (roomPosition[0]+direction[0], roomPosition[1]+direction[1])
+		if otherRoomPosition not in self.positionToRoom:
+			self.positionToRoom[otherRoomPosition] = Room(otherRoomPosition)
+		otherRoom = self.positionToRoom[otherRoomPosition]
+		room.addConnection(otherRoom)
 
 class Room:
 	def __init__(self, position):
@@ -23,11 +27,8 @@ class Room:
 		self.connectedRooms = set()
 
 	def addConnection(self, otherRoom):
-		direction = (otherRoom.position[0]-self.position[0], otherRoom.position[1]-self.position[1])
-		if direction not in Direction.all:
-			raise RuntimeError("Invalid connection from room at {p1} to room at {p2}".format(
-					p1=self.position, p2=otherRoom.position))
 		self.connectedRooms.add(otherRoom)
+		otherRoom.connectedRooms.add(self)
 
 class Direction:
 	north = ( 0, -1)
@@ -60,6 +61,7 @@ def readRegexFromFile(fileName):
 #   facility   The facility to explore.
 #   regex      Remaining regex.
 #   positions  A set of positions, where we are currently at.
+# Returns a set of positions, where we are at after exploring the regex.
 def exploreFacilityAccordingToRegex(facility, regex, positions):
 	if len(regex) == 0:
 		return positions
@@ -84,10 +86,8 @@ def exploreFacilityAccordingToRegex(facility, regex, positions):
 					direction = Direction.getDirectionFromSymbol(symbol)
 					newPositions = set()
 					for position in positions:
-						newPosition = (position[0]+direction[0], position[1]+direction[1])
-						newPositions.add(newPosition)
-						facility.addRoom(newPosition)
 						facility.addDoor(position, direction)
+						newPositions.add((position[0]+direction[0], position[1]+direction[1]))
 					positions = newPositions
 				elif symbol == "(":
 					return exploreFacilityAccordingToRegex(facility, regex[i:], positions)
@@ -131,7 +131,7 @@ def splitRegexOnBranches(regex):
 	regexList.append(regex)
 	return regexList
 
-# Returns a dict, where key is room, and value is shortest distance.
+# Returns a dict, where key is room, and value is shortest distance to room.
 def getShortestDistanceToEveryRoom(facility):
 	roomToDistance = {}
 	startRoom = facility.positionToRoom[(0,0)]
@@ -141,15 +141,9 @@ def getShortestDistanceToEveryRoom(facility):
 	while len(fringe) > 0:
 		for room in fringe:
 			roomToDistance[room] = currentDistance
-		newFringe = set()
-		for room in fringe:
-			for nextRoom in room.connectedRooms:
-				if nextRoom not in visitedRooms:
-					visitedRooms.add(nextRoom)
-					newFringe.add(nextRoom)
-		fringe = newFringe
-		if len(fringe) > 0:
-			currentDistance += 1
+		fringe = set(r2 for r in fringe for r2 in r.connectedRooms if r2 not in visitedRooms)
+		visitedRooms |= fringe
+		currentDistance += 1
 	return roomToDistance
 
 ########
