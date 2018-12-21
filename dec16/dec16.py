@@ -33,6 +33,9 @@ class InstructionExample:
 #############
 # Functions #
 #############
+# Returns (instructions, examples), where:
+# - instructions is a list. Each element in the list (an instruction) is a list of integers.
+# - examples is a list of InstructionExample.
 def getInstructionsAndExamplesFromFile(fileName):
 	instructions = []
 	examples = []
@@ -44,17 +47,24 @@ def getInstructionsAndExamplesFromFile(fileName):
 			if matchBefore:
 				registersBefore = stringToIntegerList(matchBefore.group(1))
 				line = f.readline()
-				instruction = [int(x) for x in line.strip().split()]
+				instruction = stringToIntegerList(line)
 				line = f.readline()
 				matchAfter = re.match("^After: *(\[.*\])", line)
 				registersAfter = stringToIntegerList(matchAfter.group(1))
 				examples.append(InstructionExample(registersBefore, instruction, registersAfter))
 			elif len(line.strip()) > 0:
-				instructions.append([int(x) for x in line.strip().split()])
+				instructions.append(stringToIntegerList(line))
 	return (instructions, examples)
 
+# Supported string formats:
+# 1:  [1, 2, 3, 4] (Comma-separated with square brackets)
+# 2:  1 2 3 4      (Whitespace-separated without square brackets)
+# Returns a list of integers.
 def stringToIntegerList(s):
-	return [int(x.strip()) for x in s.strip("\[\]").split(",")]
+	if "[" in s:
+		return [int(x.strip()) for x in s.strip("\[\]").split(",")]
+	else:
+		return [int(x.strip()) for x in s.split()]
 
 def opAddr(registers, instruction):
 	opAddr.name = "addr"
@@ -154,31 +164,30 @@ def opEqrr(registers, instruction):
 	else:
 		op.setRegC(0)
 
-# Returns dict, where key i InstructionExample, and value is number of operations that match.
-def getNumberOfMatchingOperations(instructionExamples):
-	ieToCount = {}
-	for ie in instructionExamples:
-		ieToCount[ie] = 0
-		for operation in allOperations:
-			registers = list(ie.registersBefore)
-			operation(registers, ie.instruction)
-			if registers == ie.registersAfter:
-				ieToCount[ie] += 1
-	return ieToCount
+# Returns number of matching operations for instructionExample.
+def getNumberOfMatchingOperations(instructionExample):
+	nMatches = 0
+	for operation in allOperations:
+		registers = list(instructionExample.registersBefore)
+		operation(registers, instructionExample.instruction)
+		if registers == instructionExample.registersAfter:
+			nMatches += 1
+	return nMatches
 
 # Returns dict, where key is opcode (integer), and value is a list of operations that match.
-def getPossibleOperationsForEachOpcode(instructionExamples):
+def getOpcodeToOperationList(instructionExamples):
 	opcodeToOperationList = {}
 	for ie in instructionExamples:
 		opcode = ie.instruction[0]
 		if opcode not in opcodeToOperationList:
-			# First time encountering this opcode. All operations could potentially match.
+			# First time encountering this opcode. Initially, all operations could match.
 			opcodeToOperationList[opcode] = list(allOperations)
 		for operation in allOperations:
 			registers = list(ie.registersBefore)
 			operation(registers, ie.instruction)
 			if registers != ie.registersAfter:
-				# Operations doesn't match this InstructionExample, and can't be this opcode.
+				# This operation doesn't match this InstructionExample,
+				# so this opcode can't be this operation.
 				try:
 					opcodeToOperationList[opcode].remove(operation)
 				except ValueError:
@@ -186,29 +195,39 @@ def getPossibleOperationsForEachOpcode(instructionExamples):
 					pass
 	return opcodeToOperationList
 
-def tryToSolve(opcodeToOperationList):
-	# List of tuples: (opcode, operation)
-	toRemove = []
+def solveOpcodes(opcodeToOperationList):
+	# Dict. Key is opcode. Value is the only possible operation.
+	opcodeToOperation = {opcode: opList[0] for (opcode, opList) in opcodeToOperationList.items() if len(opList) == 1}
+	solvedOpcodes = set(opcodeToOperation.keys())
+	solvedOperations = set(opcodeToOperation.values())
 	progress = False
-	for (opcode, operationList) in opcodeToOperationList.items():
-		if len(operationList) == 1:
-			toRemove.append((opcode, operationList[0]))
-	if len(toRemove) == 0:
-		return False
-	for (opcodeWithOnlyOneOperation, onlyOperation) in toRemove:
-		for (opcode, operationList) in opcodeToOperationList.items():
-			if opcode != opcodeWithOnlyOneOperation:
-				try:
-					operationList.remove(onlyOperation)
-					progress = True
-				except ValueError:
-					# Operation has already been removed from list
-					pass
-	return progress
+	for opcode in [x for x in opcodeToOperationList if x not in solvedOpcodes]:
+		for operation in solvedOperations:
+			try:
+				opcodeToOperationList[opcode].remove(operation)
+				progress = True
+			except ValueError:
+				# Operation has already been removed from list
+				pass
+	if not progress:
+		print("Couldn't solve opcodes")
+		sys.exit(1)
+	solved = all([len(opList) == 1 for opList in opcodeToOperationList.values()])
+	if not solved:
+		solveOpcodes(opcodeToOperationList)
+
+# Executes the instructions in "instructions".
+# Returns the registers.
+def executeInstructions(instructions, opcodeToOperation):
+	registers = [0, 0, 0, 0]
+	for instruction in instructions:
+		operation = opcodeToOperation[instruction[0]]
+		operation(registers, instruction)
+	return registers
 
 def printOpcodeToOperationList(opcodeToOperationList):
-	for (opcode, operationList) in opcodeToOperationList.items():
-		operationNames = ", ".join([x.name for x in operationList])
+	for opcode in sorted(opcodeToOperationList):
+		operationNames = ", ".join([x.name for x in opcodeToOperationList[opcode]])
 		print("opcode {oc} matches: {ol}".format(oc=opcode, ol=operationNames))
 
 ########
@@ -220,22 +239,14 @@ allOperations = [
 ]
 (instructions, instructionExamples) = getInstructionsAndExamplesFromFile("input16")
 
-part1Answer = len([x for x in getNumberOfMatchingOperations(instructionExamples).values() if x >= 3])
+# Part 1
+ieToNumberOfMatchingOperations = {ie: getNumberOfMatchingOperations(ie) for ie in instructionExamples}
+part1Answer = len([x for x in ieToNumberOfMatchingOperations.values() if x >= 3])
 print("Part 1. Number of instructions that matches at least 3 operations: {}".format(part1Answer))
 
-opcodeToOperationList = getPossibleOperationsForEachOpcode(instructionExamples)
-printOpcodeToOperationList(opcodeToOperationList)
-while tryToSolve(opcodeToOperationList):
-	print("Tried to solve")
-	printOpcodeToOperationList(opcodeToOperationList)
-
-if not all([len(x) == 1 for x in opcodeToOperationList.values()]):
-	print("Couldn't find solution")
-	sys.exit(1)
+# Part 2
+opcodeToOperationList = getOpcodeToOperationList(instructionExamples)
+solveOpcodes(opcodeToOperationList)
 opcodeToOperation = {opcode: opList[0] for (opcode, opList) in opcodeToOperationList.items()}
-
-registers = [0, 0, 0, 0]
-for instruction in instructions:
-	operation = opcodeToOperation[instruction[0]]
-	operation(registers, instruction)
+registers = executeInstructions(instructions, opcodeToOperation)
 print("Part 2. Register 0 contains: {}".format(registers[0]))
