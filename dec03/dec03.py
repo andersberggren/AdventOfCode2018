@@ -86,6 +86,6 @@ print("Number of squares with more than one claim: {}".format(numberOfOverlappin
 
 # Part 2: What is the ID of the only claim that is not overlapping with any other claim?
 nonOverlappingClaims = findNonOverlappingClaims(combinedClaims, claims)
-print("Found {} overlapping claim(s):".format(len(nonOverlappingClaims)))
+print("Found {} non-overlapping claim(s):".format(len(nonOverlappingClaims)))
 for claim in nonOverlappingClaims:
 	print(claim.toString())

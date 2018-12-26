@@ -168,7 +168,6 @@ def getPositionRight(pos):
 def printWorld(world):
 	minX = min([pos[0] for pos in world.clay])
 	maxX = max([pos[0] for pos in world.clay])
-	minY = min([pos[1] for pos in world.clay])
 	maxY = max([pos[1] for pos in world.clay])
 	for y in range(maxY+1):
 		for x in range(minX, maxX+1):
@@ -190,7 +189,6 @@ def printWorld(world):
 ########
 world = getWorldFromFile("input17")
 world.letWaterFlow()
-printWorld(world)
 allWaterPositions = world.waterSettled | world.waterPassed
 part1Answer = len([1 for (x,y) in allWaterPositions if y >= world.minY and y <= world.maxY])
 print("Part 1. Number of squares with water: {}".format(part1Answer))
