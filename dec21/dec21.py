@@ -26,36 +26,35 @@ class CPU:
 		self.registers = [0, 0, 0, 0, 0, 0]
 		self.ip = instructionPointer
 		self.instructions = instructions
-		self.nameToOperation = {
-			"addr": Operation(calcValueAddr),
-			"addi": Operation(calcValueAddi),
-			"mulr": Operation(calcValueMulr),
-			"muli": Operation(calcValueMuli),
-			"banr": Operation(calcValueBanr),
-			"bani": Operation(calcValueBani),
-			"borr": Operation(calcValueBorr),
-			"bori": Operation(calcValueBori),
-			"setr": Operation(calcValueSetr),
-			"seti": Operation(calcValueSeti),
-			"gtir": Operation(calcValueGtir),
-			"gtri": Operation(calcValueGtri),
-			"gtrr": Operation(calcValueGtrr),
-			"eqir": Operation(calcValueEqir),
-			"eqri": Operation(calcValueEqri),
-			"eqrr": Operation(calcValueEqrr)
-		}
 
 	def executeInstructionsUntilHalt(self):
 		i = 0
+		registerStates = set()
+		uniqueHaltValues = []
 		while True:
 			instructionIndex = self.registers[self.ip]
 			if instructionIndex == 28:
-				print("Currently at instruction 28. If register 0 had value {} the program would terminate now".format(self.registers[5]))
+				haltValue = self.registers[5]
+				print("Cycle {i}. Value {h: >9} in register 0 would halt the program now. {r}".format(
+						i=i, h=haltValue, r=self.registers))
+				registerState = tuple(self.registers)
+				if registerState in registerStates:
+					print("Repeated register state. Loop found.")
+					return
+				else:
+					registerStates.add(registerState)
+				if haltValue in uniqueHaltValues:
+					print("Repeated halt value. Latest unique halt value: {}".format(uniqueHaltValues[-1]))
+				else:
+					uniqueHaltValues.append(haltValue)
+					print("Latest unique halt value: {}".format(uniqueHaltValues[-1]))
+				print("{r} register states. {h} unique halt values.".format(
+						r=len(registerStates), h=len(uniqueHaltValues)), flush=True)
 			try:
 				instruction = self.instructions[self.registers[self.ip]]
 			except IndexError:
 				break
-			operation = self.nameToOperation[instruction[0]]
+			operation = instruction[0]
 			operation.execInstruction(self.registers, instruction)
 			self.registers[self.ip] += 1
 			i += 1
@@ -75,7 +74,7 @@ def getInstructionPointerAndInstructionsFromFile(fileName):
 			if matchIP:
 				instructionPointer = int(matchIP.group(1))
 			else:
-				instruction = [matchInstruction.group(1)]
+				instruction = [nameToOperation[matchInstruction.group(1)]]
 				instruction.extend([int(x) for x in matchInstruction.group(2).strip().split()])
 				instructions.append(instruction)
 	return (instructionPointer, instructions)
@@ -149,8 +148,25 @@ def calcValueEqrr(registerA, registerB, valueA, valueB):
 ########
 # Main #
 ########
+nameToOperation = {
+	"addr": Operation(calcValueAddr),
+	"addi": Operation(calcValueAddi),
+	"mulr": Operation(calcValueMulr),
+	"muli": Operation(calcValueMuli),
+	"banr": Operation(calcValueBanr),
+	"bani": Operation(calcValueBani),
+	"borr": Operation(calcValueBorr),
+	"bori": Operation(calcValueBori),
+	"setr": Operation(calcValueSetr),
+	"seti": Operation(calcValueSeti),
+	"gtir": Operation(calcValueGtir),
+	"gtri": Operation(calcValueGtri),
+	"gtrr": Operation(calcValueGtrr),
+	"eqir": Operation(calcValueEqir),
+	"eqri": Operation(calcValueEqri),
+	"eqrr": Operation(calcValueEqrr)
+}
 (instructionPointer, instructions) = getInstructionPointerAndInstructionsFromFile("input21.txt")
 
 cpu = CPU(instructionPointer, instructions)
-cpu.registers[0] = 0
 cpu.executeInstructionsUntilHalt()
