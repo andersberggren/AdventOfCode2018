@@ -40,7 +40,7 @@ def getCorrectBoxID(boxID1, boxID2):
 ########
 # Main #
 ########
-with open("input02") as f:
+with open("input02.txt") as f:
 	boxIDs = f.read().split()
 
 # Part 1

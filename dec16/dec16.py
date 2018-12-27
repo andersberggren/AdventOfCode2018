@@ -201,7 +201,7 @@ allOperations = [
 	Operation(calcValueGtir), Operation(calcValueGtri), Operation(calcValueGtrr),
 	Operation(calcValueEqir), Operation(calcValueEqri), Operation(calcValueEqrr)
 ]
-(instructions, instructionExamples) = getInstructionsAndExamplesFromFile("input16")
+(instructions, instructionExamples) = getInstructionsAndExamplesFromFile("input16.txt")
 
 # Part 1
 ieToNumberOfMatchingOperations = {ie: getNumberOfMatchingOperations(ie) for ie in instructionExamples}

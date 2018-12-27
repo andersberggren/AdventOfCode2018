@@ -151,7 +151,7 @@ def getShortestDistanceToEveryRoom(facility):
 ########
 if __name__ == "__main__":
 	facility = Facility()
-	regex = readRegexFromFile("input20")
+	regex = readRegexFromFile("input20.txt")
 	positions = set([(0,0)])
 	exploreFacilityAccordingToRegex(facility, regex, positions)
 	roomToDistance = getShortestDistanceToEveryRoom(facility)

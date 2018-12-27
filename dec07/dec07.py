@@ -70,11 +70,11 @@ def findCompletionTimePart2(steps, numberOfWorkers):
 # Main #
 ########
 # Part 1
-steps = getStepsFromFile("input07")
+steps = getStepsFromFile("input07.txt")
 solution = findCompletionOrderPart1(steps)
 print("Part 1: Complete the steps in this order: {}".format(solution))
 
 # Part 2
-steps = getStepsFromFile("input07")
+steps = getStepsFromFile("input07.txt")
 time = findCompletionTimePart2(steps, 5)
 print("Part 2: Takes {} seconds to complete".format(time))

@@ -104,7 +104,7 @@ def getResourceValueOfWorldAfterTime(initialWorld, targetTime):
 # Main #
 ########
 if __name__ == "__main__":
-	initialWorld = readWorldFromFile("input18")
+	initialWorld = readWorldFromFile("input18.txt")
 	part1Answer = getResourceValueOfWorldAfterTime(initialWorld, 10)
 	print("Part 1: {}".format(part1Answer))
 	part2Answer = getResourceValueOfWorldAfterTime(initialWorld, 1000000000)

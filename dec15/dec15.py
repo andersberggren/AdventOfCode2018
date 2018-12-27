@@ -193,7 +193,7 @@ def printWorld(world):
 # Main #
 ########
 if __name__ == "__main__":
-	world = readWorldFromFile("input15")
+	world = readWorldFromFile("input15.txt")
 	rounds = 0
 	while True:
 		doOneRoundOfActions(world)

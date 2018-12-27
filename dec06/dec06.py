@@ -105,7 +105,7 @@ def createPointOfInterestFromString(s):
 ########
 # Main #
 ########
-grid = Grid(getPointsOfInterestFromFile("input06"))
+grid = Grid(getPointsOfInterestFromFile("input06.txt"))
 
 # Part 1
 (poi, areaSize) = grid.findLargestNonInfiniteArea()

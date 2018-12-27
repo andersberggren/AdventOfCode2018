@@ -41,7 +41,7 @@ def findBestUnitToRemove(polymer):
 ########
 # Main #
 ########
-polymer = getPolymerFromFile("input05")
+polymer = getPolymerFromFile("input05.txt")
 
 # Part 1
 polymer = getReducedPolymer(polymer)

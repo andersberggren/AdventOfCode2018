@@ -46,9 +46,9 @@ def getValueOfNodePart2(integerList):
 # Main #
 ########
 # Part 1
-integerList = getIntegerListFromFile("input08")
+integerList = getIntegerListFromFile("input08.txt")
 print("Metadata sum of all nodes: {}".format(getValueOfNodePart1(integerList)))
 
 # Part 2
-integerList = getIntegerListFromFile("input08")
+integerList = getIntegerListFromFile("input08.txt")
 print("Value of root node (part 2): {}".format(getValueOfNodePart2(integerList)))

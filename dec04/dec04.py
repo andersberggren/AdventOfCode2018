@@ -45,7 +45,7 @@ class Event:
 # Reads a file and returns a list of Event (in chronological order).
 # Each line in the file represents an event.
 def getEventsFromFile(fileName):
-	with open("input04") as f:
+	with open("input04.txt") as f:
 		return [Event.createFromString(s) for s in sorted(f.readlines())]
 
 # Processes the events in "events", and returns a dict containing data about guards
@@ -98,7 +98,7 @@ def findGuardThatSleptTheMostDuringASingleMinute(guards):
 ########
 # Main #
 ########
-idToGuard = getGuardDataFromEvents(getEventsFromFile("input04"))
+idToGuard = getGuardDataFromEvents(getEventsFromFile("input04.txt"))
 
 # Part 1
 findMostSleepyGuard(idToGuard.values())

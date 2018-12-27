@@ -77,7 +77,7 @@ def findNonOverlappingClaims(combinedClaims, claims):
 ########
 # Main #
 ########
-claims = getClaimsFromFile("input03")
+claims = getClaimsFromFile("input03.txt")
 combinedClaims = getCombinedClaims(claims)
 
 # Part 1: How many squares are claimed by more than one elf?

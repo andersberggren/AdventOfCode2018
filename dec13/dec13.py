@@ -197,7 +197,7 @@ def printTrackSystem(trackSystem):
 ########
 # Main #
 ########
-trackSystem = getTrackSystemFromFile("input13")
+trackSystem = getTrackSystemFromFile("input13.txt")
 while len(trackSystem.carts) > 1:
 	trackSystem.tick()
 print("Last cart remaining is at {}".format(trackSystem.carts[0].position))

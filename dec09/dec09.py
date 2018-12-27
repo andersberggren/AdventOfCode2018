@@ -116,7 +116,7 @@ def getGameParametersFromFile(fileName):
 ########
 # Main #
 ########
-(numberOfPlayers, valueOfFinalMarble) = getGameParametersFromFile("input09")
+(numberOfPlayers, valueOfFinalMarble) = getGameParametersFromFile("input09.txt")
 
 # Part 1
 (winningPlayer, score) = MarbleGame(numberOfPlayers, valueOfFinalMarble).playGame()

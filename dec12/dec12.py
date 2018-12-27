@@ -129,7 +129,7 @@ def printGenerations(generations):
 ########
 # Main #
 ########
-(plants, spreadPatterns) = getInitialPlantsAndSpreadPatternsFromFile("input12")
+(plants, spreadPatterns) = getInitialPlantsAndSpreadPatternsFromFile("input12.txt")
 generationZero = Generation(0, plants, spreadPatterns)
 
 for i in [20, 50000000000]:

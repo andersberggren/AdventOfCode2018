@@ -15,7 +15,7 @@ def findFirstRepeatedFrequency(initialFrequency, frequencyChangeList):
 ########
 # Main #
 ########
-with open("input01") as f:
+with open("input01.txt") as f:
 	fileContents = f.read()
 	frequencyChangeList = [int(frequencyChange) for frequencyChange in fileContents.split()]
 

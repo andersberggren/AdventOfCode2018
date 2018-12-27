@@ -72,7 +72,7 @@ def printLights(lights):
 ########
 # Main #
 ########
-lights = getLightListFromFile("input10")
+lights = getLightListFromFile("input10.txt")
 time = updateUntilLightsAreGroupedTogether(lights)
 print("After {} seconds, the lights are grouped together. Message:".format(time))
 printLights(lights)

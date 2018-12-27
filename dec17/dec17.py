@@ -185,7 +185,7 @@ def printWorld(world):
 ########
 # Main #
 ########
-world = getWorldFromFile("input17")
+world = getWorldFromFile("input17.txt")
 world.letWaterFlow()
 allWaterPositions = world.waterSettled | world.waterPassed
 part1Answer = len([1 for (x,y) in allWaterPositions if y >= world.minY and y <= world.maxY])
