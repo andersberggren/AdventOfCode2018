@@ -5,24 +5,16 @@ import sys
 # Class #
 #########
 class Operation:
-	def __init__(self, registers, instruction):
-		self.registers = registers
-		self.instruction = instruction
+	def __init__(self, calcValue):
+		self.calcValue = calcValue
 
-	def getRegA(self):
-		return self.registers[self.instruction[1]]
-
-	def getRegB(self):
-		return self.registers[self.instruction[2]]
-
-	def getValueA(self):
-		return self.instruction[1]
-
-	def getValueB(self):
-		return self.instruction[2]
-
-	def setRegC(self, value):
-		self.registers[self.instruction[3]] = value
+	def execInstruction(self, registers, instruction):
+		registerA = registers[instruction[1]]
+		registerB = registers[instruction[2]]
+		valueA = instruction[1]
+		valueB = instruction[2]
+		registerC = self.calcValue(registerA, registerB, valueA, valueB)
+		registers[instruction[3]] = registerC
 
 class InstructionExample:
 	def __init__(self, registersBefore, instruction, registersAfter):
@@ -33,28 +25,27 @@ class InstructionExample:
 #############
 # Functions #
 #############
-# Returns (instructions, examples), where:
+# Returns (instructions, instructionExamples), where:
 # - instructions is a list. Each element in the list (an instruction) is a list of integers.
-# - examples is a list of InstructionExample.
+# - instructionExamples is a list of InstructionExample.
 def getInstructionsAndExamplesFromFile(fileName):
 	instructions = []
-	examples = []
+	instructionExamples = []
 	with open(fileName) as f:
-		line = None
-		while line != "":
-			line = f.readline()
+		lines = f.readlines()
+		while len(lines) > 0:
+			line = lines.pop(0)
 			matchBefore = re.match("^Before: *(\[.*\])", line)
 			if matchBefore:
 				registersBefore = stringToIntegerList(matchBefore.group(1))
-				line = f.readline()
-				instruction = stringToIntegerList(line)
-				line = f.readline()
-				matchAfter = re.match("^After: *(\[.*\])", line)
+				instruction = stringToIntegerList(lines.pop(0))
+				matchAfter = re.match("^After: *(\[.*\])", lines.pop(0))
 				registersAfter = stringToIntegerList(matchAfter.group(1))
-				examples.append(InstructionExample(registersBefore, instruction, registersAfter))
+				instructionExample = InstructionExample(registersBefore, instruction, registersAfter)
+				instructionExamples.append(instructionExample)
 			elif len(line.strip()) > 0:
 				instructions.append(stringToIntegerList(line))
-	return (instructions, examples)
+	return (instructions, instructionExamples)
 
 # Supported string formats:
 # 1:  [1, 2, 3, 4] (Comma-separated with square brackets)
@@ -66,110 +57,78 @@ def stringToIntegerList(s):
 	else:
 		return [int(x.strip()) for x in s.split()]
 
-def opAddr(registers, instruction):
-	opAddr.name = "addr"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() + op.getRegB())
+def calcValueAddr(registerA, registerB, valueA, valueB):
+	return registerA + registerB
 
-def opAddi(registers, instruction):
-	opAddi.name = "addi"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() + op.getValueB())
+def calcValueAddi(registerA, registerB, valueA, valueB):
+	return registerA + valueB
 
-def opMulr(registers, instruction):
-	opMulr.name = "mulr"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() * op.getRegB())
+def calcValueMulr(registerA, registerB, valueA, valueB):
+	return registerA * registerB
 
-def opMuli(registers, instruction):
-	opMuli.name = "muli"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() * op.getValueB())
+def calcValueMuli(registerA, registerB, valueA, valueB):
+	return registerA * valueB
 
-def opBanr(registers, instruction):
-	opBanr.name = "banr"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() & op.getRegB())
+def calcValueBanr(registerA, registerB, valueA, valueB):
+	return registerA & registerB
 
-def opBani(registers, instruction):
-	opBani.name = "bani"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() & op.getValueB())
+def calcValueBani(registerA, registerB, valueA, valueB):
+	return registerA & valueB
 
-def opBorr(registers, instruction):
-	opBorr.name = "borr"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() | op.getRegB())
+def calcValueBorr(registerA, registerB, valueA, valueB):
+	return registerA | registerB
 
-def opBori(registers, instruction):
-	opBori.name = "bori"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA() | op.getValueB())
+def calcValueBori(registerA, registerB, valueA, valueB):
+	return registerA | valueB
 
-def opSetr(registers, instruction):
-	opSetr.name = "setr"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getRegA())
+def calcValueSetr(registerA, registerB, valueA, valueB):
+	return registerA
 
-def opSeti(registers, instruction):
-	opSeti.name = "seti"
-	op = Operation(registers, instruction)
-	op.setRegC(op.getValueA())
+def calcValueSeti(registerA, registerB, valueA, valueB):
+	return valueA
 
-def opGtir(registers, instruction):
-	opGtir.name = "gtir"
-	op = Operation(registers, instruction)
-	if op.getValueA() > op.getRegB():
-		op.setRegC(1)
+def calcValueGtir(registerA, registerB, valueA, valueB):
+	if valueA > registerB:
+		return 1
 	else:
-		op.setRegC(0)
+		return 0
 
-def opGtri(registers, instruction):
-	opGtri.name = "gtri"
-	op = Operation(registers, instruction)
-	if op.getRegA() > op.getValueB():
-		op.setRegC(1)
+def calcValueGtri(registerA, registerB, valueA, valueB):
+	if registerA > valueB:
+		return 1
 	else:
-		op.setRegC(0)
+		return 0
 
-def opGtrr(registers, instruction):
-	opGtrr.name = "gtrr"
-	op = Operation(registers, instruction)
-	if op.getRegA() > op.getRegB():
-		op.setRegC(1)
+def calcValueGtrr(registerA, registerB, valueA, valueB):
+	if registerA > registerB:
+		return 1
 	else:
-		op.setRegC(0)
+		return 0
 
-def opEqir(registers, instruction):
-	opEqir.name = "eqir"
-	op = Operation(registers, instruction)
-	if op.getValueA() == op.getRegB():
-		op.setRegC(1)
+def calcValueEqir(registerA, registerB, valueA, valueB):
+	if valueA == registerB:
+		return 1
 	else:
-		op.setRegC(0)
+		return 0
 
-def opEqri(registers, instruction):
-	opEqri.name = "eqri"
-	op = Operation(registers, instruction)
-	if op.getRegA() == op.getValueB():
-		op.setRegC(1)
+def calcValueEqri(registerA, registerB, valueA, valueB):
+	if registerA == valueB:
+		return 1
 	else:
-		op.setRegC(0)
+		return 0
 
-def opEqrr(registers, instruction):
-	opEqrr.name = "eqrr"
-	op = Operation(registers, instruction)
-	if op.getRegA() == op.getRegB():
-		op.setRegC(1)
+def calcValueEqrr(registerA, registerB, valueA, valueB):
+	if registerA == registerB:
+		return 1
 	else:
-		op.setRegC(0)
+		return 0
 
 # Returns number of matching operations for instructionExample.
 def getNumberOfMatchingOperations(instructionExample):
 	nMatches = 0
 	for operation in allOperations:
 		registers = list(instructionExample.registersBefore)
-		operation(registers, instructionExample.instruction)
+		operation.execInstruction(registers, instructionExample.instruction)
 		if registers == instructionExample.registersAfter:
 			nMatches += 1
 	return nMatches
@@ -184,7 +143,7 @@ def getOpcodeToOperationList(instructionExamples):
 			opcodeToOperationList[opcode] = list(allOperations)
 		for operation in allOperations:
 			registers = list(ie.registersBefore)
-			operation(registers, ie.instruction)
+			operation.execInstruction(registers, ie.instruction)
 			if registers != ie.registersAfter:
 				# This operation doesn't match this InstructionExample,
 				# so this opcode can't be this operation.
@@ -222,7 +181,7 @@ def executeInstructions(instructions, opcodeToOperation):
 	registers = [0, 0, 0, 0]
 	for instruction in instructions:
 		operation = opcodeToOperation[instruction[0]]
-		operation(registers, instruction)
+		operation.execInstruction(registers, instruction)
 	return registers
 
 def printOpcodeToOperationList(opcodeToOperationList):
@@ -234,8 +193,13 @@ def printOpcodeToOperationList(opcodeToOperationList):
 # Main #
 ########
 allOperations = [
-	opAddr, opAddi, opMulr, opMuli, opBanr, opBani, opBorr, opBori,
-	opSetr, opSeti, opGtir, opGtri, opGtrr, opEqir, opEqri, opEqrr
+	Operation(calcValueAddr), Operation(calcValueAddi),
+	Operation(calcValueMulr), Operation(calcValueMuli),
+	Operation(calcValueBanr), Operation(calcValueBani),
+	Operation(calcValueBorr), Operation(calcValueBori),
+	Operation(calcValueSetr), Operation(calcValueSeti),
+	Operation(calcValueGtir), Operation(calcValueGtri), Operation(calcValueGtrr),
+	Operation(calcValueEqir), Operation(calcValueEqri), Operation(calcValueEqrr)
 ]
 (instructions, instructionExamples) = getInstructionsAndExamplesFromFile("input16")
 
