@@ -8,10 +8,10 @@ class World:
 		self.waterSpring = (500, 0)
 		# Set of positions (x,y) with clay
 		self.clay = set()
+		# Set of positions (x,y) where water has passed
+		self.waterPassed = {self.waterSpring}
 		# Set of positions (x,y) where water has settled
 		self.waterSettled = set()
-		# Set of positions (x,y) where water has passed, but not settled (yet)
-		self.waterPassed = {self.waterSpring}
 		self.minY = None
 		self.maxY = None
 
@@ -29,36 +29,39 @@ class World:
 			self.maxY = max(self.maxY, topLeftY+height-1)
 
 	def letWaterFlow(self):
-		i = 0
-		while True:
-			waterBefore = self.getWaterAmounts()
-			for pos in [x for x in self.waterPassed if x[1] <= self.maxY]:
-				self.letWaterFlowDown(pos)
-				self.letWaterFlowSideways(pos)
-				self.letWaterSettle(pos)
-			self.waterPassed = self.waterPassed.difference(self.waterSettled)
-			waterAfter = self.getWaterAmounts()
-			i += 1
-			print("Iteration {i}. Water amounts: {w}".format(i=i, w=waterAfter), flush=True)
-			if waterBefore == waterAfter:
-				return
+		newPositionsToEvaluate = {self.waterSpring}
+		while newPositionsToEvaluate:
+			positionsToEvaluateThisIteration = newPositionsToEvaluate
+			newPositionsToEvaluate = set()
+			for pos in positionsToEvaluateThisIteration:
+				newPositionsToEvaluate |= self.letWaterFlowDown(pos)
+				newPositionsToEvaluate |= self.letWaterFlowSideways(pos)
+				newPositionsToEvaluate |= self.letWaterSettle(pos)
 
 	# Water spreads downwards.
+	# Returns a set of positions that needs to be evaluated during next iteration.
 	def letWaterFlowDown(self, pos):
-		pos = getPositionBelow(pos)
-		while self.isEmpty(pos) and pos[1] <= self.maxY:
-			self.waterPassed.add(pos)
+		newPositionsToEvaluate = set()
+		while True:
 			pos = getPositionBelow(pos)
+			if not (pos[1] <= self.maxY and self.isEmpty(pos)):
+				break
+			self.waterPassed.add(pos)
+			newPositionsToEvaluate.add(pos)
+		return newPositionsToEvaluate
 
 	# Water spreads sideways, if directly above clay or settled water.
+	# Returns a set of positions that needs to be evaluated during next iteration.
 	def letWaterFlowSideways(self, pos):
+		newPositionsToEvaluate = set()
 		if not self.hasSupportFromBelow(pos):
-			return
+			return set()
 		posLeft = pos
 		while self.hasSupportFromBelow(posLeft):
 			posLeft = getPositionLeft(posLeft)
 			if self.isEmpty(posLeft):
 				self.waterPassed.add(posLeft)
+				newPositionsToEvaluate.add(posLeft)
 			else:
 				break
 		posRight = pos
@@ -66,16 +69,19 @@ class World:
 			posRight = getPositionRight(posRight)
 			if self.isEmpty(posRight):
 				self.waterPassed.add(posRight)
+				newPositionsToEvaluate.add(posRight)
 			else:
 				break
+		return newPositionsToEvaluate
 
 	# Water settles, if supported from left and right and below.
+	# Returns a set of positions that needs to be evaluated during next iteration.
 	def letWaterSettle(self, pos):
 		supportRight = False
 		supportLeft = False
 		while not supportRight:
 			if not self.hasSupportFromBelow(pos):
-				return
+				return set()
 			elif self.hasSupportFromRight(pos):
 				supportRight = True
 			else:
@@ -83,36 +89,28 @@ class World:
 		maxX = pos[0]
 		while not supportLeft:
 			if not self.hasSupportFromBelow(pos):
-				return
+				return set()
 			elif self.hasSupportFromLeft(pos):
 				supportLeft = True
 			else:
 				pos = getPositionLeft(pos)
 		minX = pos[0]
+		newPositionsToEvaluate = set()
 		for x in range(minX, maxX+1):
-			self.waterSettled.add((x,pos[1]))
+			positionToSettle = (x,pos[1])
+			if positionToSettle not in self.waterSettled:
+				self.waterPassed.add(positionToSettle)
+				self.waterSettled.add(positionToSettle)
+				posAbove = getPositionAbove(positionToSettle)
+				if posAbove in self.waterPassed:
+					newPositionsToEvaluate.add(posAbove)
+		return newPositionsToEvaluate
+
+	def getWaterAmounts(self):
+		return (len(self.waterSettled), len(self.waterPassed))
 
 	def isEmpty(self, pos):
 		return pos not in self.clay and pos not in self.waterSettled and pos not in self.waterPassed
-
-	def canWaterSettle(self, pos):
-		supportRight = False
-		supportLeft = False
-		while not supportRight:
-			if not self.hasSupportFromBelow(pos):
-				return False
-			elif self.hasSupportFromRight(pos):
-				supportRight = True
-			else:
-				pos = getPositionRight(pos)
-		while not supportLeft:
-			if not self.hasSupportFromBelow(pos):
-				return False
-			elif self.hasSupportFromLeft(pos):
-				supportLeft = True
-			else:
-				pos = getPositionLeft(pos)
-		return True
 
 	def hasSupportFromBelow(self, pos):
 		posBelow = getPositionBelow(pos)
@@ -125,9 +123,6 @@ class World:
 	def hasSupportFromRight(self, pos):
 		posRight = getPositionRight(pos)
 		return posRight in self.clay or posRight in self.waterSettled
-
-	def getWaterAmounts(self):
-		return (len(self.waterSettled), len(self.waterPassed))
 
 #############
 # Functions #
@@ -155,6 +150,9 @@ def stringToRectangle(s):
 	else:
 		height = int(yMatch.group(3)) + 1 - y
 	return (x, y, width, height)
+
+def getPositionAbove(pos):
+	return (pos[0], pos[1]-1)
 
 def getPositionBelow(pos):
 	return (pos[0], pos[1]+1)
