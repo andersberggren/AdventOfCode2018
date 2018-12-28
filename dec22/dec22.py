@@ -1,20 +1,24 @@
 import re
 import sys
 
+from aoclib.sortedlist import SortedList
+
 ###########
 # Classes #
 ###########
 class AStar:
-	def __init__(self, initialNode):
-		self.nodeList = [initialNode]
+	def __init__(self, initialNodes):
+		self.nodeList = SortedList()
+		for node in initialNodes:
+			self.nodeList.insert(node)
 		self.locationToToolAndTime = {}
 
 	def findBestSolution(self):
 		nCreated = 1
 		nEvaluated = 0
 		nSkipped = 0
-		while self.nodeList:
-			node = self.nodeList.pop(0)
+		while not self.nodeList.isEmpty():
+			node = self.nodeList.pop()
 			if self.canSkip(node):
 				nSkipped += 1
 				continue
@@ -29,13 +33,12 @@ class AStar:
 				if self.canSkip(successorNode):
 					nSkipped += 1
 				else:
-					self.nodeList.append(successorNode)
+					self.nodeList.insert(successorNode)
 				if nCreated % 10000 == 0:
 					print("Created: {c: >7}  In list: {l: >7}  Evaluated: {e: >7}  Skipped: {s: >7}".format(
-							c=nCreated, l=len(self.nodeList), e=nEvaluated, s=nSkipped))
+							c=nCreated, l=self.nodeList.getSize(), e=nEvaluated, s=nSkipped))
 					print("Current node is at {l} after {t} minutes. f() = {f}".format(
 						l=node.location, t=node.timeSpent, f=node.f()))
-			self.nodeList = sorted(self.nodeList, key=lambda x: x.f())
 		print("All nodes evaluated. No solution found.")
 	
 	def canSkip(self, node):
@@ -71,6 +74,9 @@ class SearchNode:
 		if self.equippedTool not in self.cave.getValidTools(self.location):
 			self.equippedTool = self.cave.getCommonTool(self.location, self.parentNode.location)
 			self.timeSpent += 7
+		elif self.location == self.cave.targetLocation and self.equippedTool != Tool.torch:
+			self.equippedTool = Tool.torch
+			self.timeSpent += 7
 		#print("Node at {l}, tool {tool}, time {time}".format(
 		#		l=self.location, tool=self.equippedTool.name, time=self.timeSpent))
 	
@@ -90,7 +96,14 @@ class SearchNode:
 
 	# Returns the sum of cost so far and heuristic cost to solution.
 	def f(self):
-		return self.timeSpent + getManhattanDistance(self.location, self.cave.targetLocation)
+		try:
+			return self.fValue
+		except AttributeError:
+			self.fValue = self.timeSpent + getManhattanDistance(self.location, self.cave.targetLocation)
+			return self.fValue
+	
+	def __lt__(self, other):
+		return self.f() < other.f()
 
 class Direction:
 	up    = ( 0, -1)
@@ -160,6 +173,18 @@ class Cave:
 					a=locationA, b=locationB, n=len(commonTools)))
 			sys.exit(1)
 		return commonTools.pop()
+	
+	def printCave(self):
+		for y in range(self.targetLocation[1]+6):
+			for x in range(self.targetLocation[0]+6):
+				location = (x,y)
+				symbol = self.getRegion(location).type.symbol
+				if location == (0,0):
+					symbol = "M"
+				elif location == self.targetLocation:
+					symbol = "T"
+				print(symbol, end="")
+			print()
 
 class Tool:
 	def __init__(self, name):
@@ -177,8 +202,8 @@ class Region:
 		self.type = None
 
 class RegionType:
-	def __init__(self, name, risk, validTools):
-		self.name = name
+	def __init__(self, symbol, risk, validTools):
+		self.symbol = symbol
 		self.risk = risk
 		self.validTools = validTools
 	
@@ -186,9 +211,9 @@ class RegionType:
 	def getRegionType(erosionLevel):
 		return RegionType.all[erosionLevel % 3]
 
-RegionType.rocky  = RegionType("Rocky",  0, {Tool.torch, Tool.climbingGear})
-RegionType.wet    = RegionType("Wet",    1, {Tool.empty, Tool.climbingGear})
-RegionType.narrow = RegionType("Narrow", 2, {Tool.empty, Tool.torch})
+RegionType.rocky  = RegionType(".", 0, {Tool.torch, Tool.climbingGear})
+RegionType.wet    = RegionType("=", 1, {Tool.empty, Tool.climbingGear})
+RegionType.narrow = RegionType("|", 2, {Tool.empty, Tool.torch})
 RegionType.all = [RegionType.rocky, RegionType.wet, RegionType.narrow]
 
 #############
@@ -216,15 +241,14 @@ def getLocation(location, direction):
 # Main #
 ########
 (depth, targetLocation) = getDepthAndTargetLocationFromFile("input22.txt")
+#depth = 510
+#targetLocation = (10,10)
 cave = Cave(depth, targetLocation)
-cave.createRegion((cave.targetLocation[0], cave.targetLocation[1]+1))
+#cave.printCave()
 print("Total risk: {}".format(cave.getTotalRisk()))
 
 # Part 2
-# 966 is too low.
-# Added 7 minutes for changing to torch. 973 is too high.
-# 967 is not correct either
-# 968-972
 initialNode = SearchNode(None, cave, (0,0))
-aStar = AStar(initialNode)
+aStar = AStar([initialNode])
 solutionNode = aStar.findBestSolution()
+print(solutionNode.equippedTool.name)
