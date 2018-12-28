@@ -11,7 +11,7 @@ class AStar:
 		self.nodeList = SortedList()
 		for node in initialNodes:
 			self.nodeList.insert(node)
-		self.locationToToolAndTime = {}
+		self.locationToTime = {}
 
 	def findBestSolution(self):
 		nCreated = 1
@@ -26,7 +26,7 @@ class AStar:
 				nEvaluated += 1
 				self.updateToolAndTime(node)
 			if node.isSolution():
-				print("Found solution! Time spent: {}".format(node.timeSpent))
+				print("Found solution!")
 				return node
 			for successorNode in node.getSuccessorNodes():
 				nCreated += 1
@@ -38,26 +38,24 @@ class AStar:
 					print("Created: {c: >7}  In list: {l: >7}  Evaluated: {e: >7}  Skipped: {s: >7}".format(
 							c=nCreated, l=self.nodeList.getSize(), e=nEvaluated, s=nSkipped))
 					print("Current node is at {l} after {t} minutes. f() = {f}".format(
-						l=node.location, t=node.timeSpent, f=node.f()))
+						l=node.location, t=node.timeSpent, f=node.f))
 		print("All nodes evaluated. No solution found.")
 	
 	def canSkip(self, node):
+		key = (node.location[0], node.location[1], node.equippedTool)
 		try:
-			(tool, timeSpent) = self.locationToToolAndTime[node.location]
-			if node.equippedTool == tool:
-				return node.timeSpent >= timeSpent
-			else:
-				return node.timeSpent >= timeSpent+7
+			return node.timeSpent >= self.locationToTime[key]
 		except KeyError:
 			return False
 	
 	def updateToolAndTime(self, node):
+		key = (node.location[0], node.location[1], node.equippedTool)
 		try:
-			timeSpent = self.locationToToolAndTime[node.location][1]
+			timeSpent = self.locationToTime[key]
 			if node.timeSpent < timeSpent:
-				self.locationToToolAndTime[node.location] = (node.equippedTool, node.timeSpent)
+				self.locationToTime[key] = node.timeSpent
 		except KeyError:
-			self.locationToToolAndTime[node.location] = (node.equippedTool, node.timeSpent)
+			self.locationToTime[key] = node.timeSpent
 
 class SearchNode:
 	def __init__(self, parentNode, cave, location):
@@ -77,8 +75,12 @@ class SearchNode:
 		elif self.location == self.cave.targetLocation and self.equippedTool != Tool.torch:
 			self.equippedTool = Tool.torch
 			self.timeSpent += 7
-		#print("Node at {l}, tool {tool}, time {time}".format(
-		#		l=self.location, tool=self.equippedTool.name, time=self.timeSpent))
+		# g: Cost so far
+		# h: Heuristic estimate of remaining cost to solution (must not overestimate)
+		# f: g + h
+		self.g = self.timeSpent
+		self.h = getManhattanDistance(self.location, self.cave.targetLocation)
+		self.f = self.g + self.h
 	
 	def getSuccessorNodes(self):
 		successorNodes = []
@@ -94,16 +96,8 @@ class SearchNode:
 	def isSolution(self):
 		return self.location == self.cave.targetLocation
 
-	# Returns the sum of cost so far and heuristic cost to solution.
-	def f(self):
-		try:
-			return self.fValue
-		except AttributeError:
-			self.fValue = self.timeSpent + getManhattanDistance(self.location, self.cave.targetLocation)
-			return self.fValue
-	
 	def __lt__(self, other):
-		return self.f() < other.f()
+		return self.f < other.f or (self.f == other.f and self.g > other.g)
 
 class Direction:
 	up    = ( 0, -1)
@@ -251,4 +245,4 @@ print("Total risk: {}".format(cave.getTotalRisk()))
 initialNode = SearchNode(None, cave, (0,0))
 aStar = AStar([initialNode])
 solutionNode = aStar.findBestSolution()
-print(solutionNode.equippedTool.name)
+print("Solution found. Time to reach target: {}".format(solutionNode.timeSpent))
