@@ -54,6 +54,7 @@ def getArmiesFromFile(fileName):
 				group = Group(army, nrUnits, hpPerUnit, defenseModifiers,
 				              attackPowerPerUnit, attackType, initiative)
 				army.groups.append(group)
+				group.id = army.faction + " " + str(len(army.groups))
 		return armies
 
 # Returns a dict. Key is damage type. Value is modifier.
@@ -74,12 +75,65 @@ def getDefenseModifiers(descriptionString):
 			defenseModifiers[attackType.strip()] = modifier
 	return defenseModifiers
 
+def getTargetSelections(armies):
+	print("Target selection:")
+	attackerToDefender = {}
+	for attacker in getGroupsInTargetSelectionOrder(armies):
+		eligibleDefenders = getEnemyGroups(armies, attacker)
+		eligibleDefenders = [x for x in eligibleDefenders if x not in attackerToDefender.values()]
+		defender = getTarget(attacker, eligibleDefenders)
+		if defender is not None:
+			attackerToDefender[attacker] = defender
+			print("{a} has {ep} effective power, selects {d}".format(
+					a=attacker.id, ep=attacker.getEffectivePower(), d=defender.id))
+		else:
+			print("{a} has {ep} effective power, but no eligible targets :(".format(
+					a=attacker.id, ep=attacker.getEffectivePower()))
+	return sorted([x for x in attackerToDefender.items()], key=lambda x: x[0].initiative, reverse=True)
+
+def getGroupsInTargetSelectionOrder(armies):
+	def sortKey(group):
+		return (group.getEffectivePower(), group.initiative)
+	return sorted([group for army in armies for group in army.groups], key=sortKey, reverse=True)
+
+def getTarget(attacker, defenderGroups):
+	def sortKey(defender):
+		return (getDamage(attacker, defender), defender.getEffectivePower(), defender.initiative)
+	defenderGroups = [x for x in defenderGroups if getDamage(attacker, x) > 0]
+	defenderGroups = sorted(defenderGroups, key=sortKey, reverse=True)
+	try:
+		return defenderGroups[0]
+	except IndexError:
+		return None
+
+def getEnemyGroups(armies, myGroup):
+	return [group for army in armies for group in army.groups if army != myGroup.army]
+
+def getDamage(attacker, defender):
+	try:
+		modifier = defender.defenseModifiers[attacker.attackType]
+	except KeyError:
+		modifier = 1
+	return attacker.attackPowerPerUnit * attacker.nrUnits * modifier
+
+def doOneRoundOfAttacks(armies):
+	attackersAndDefenders = getTargetSelections(armies)
+	print("Attack:")
+	for (attacker, defender) in attackersAndDefenders:
+		damageDealt = getDamage(attacker, defender)
+		unitsKilled = damageDealt // defender.hpPerUnit
+		defender.nrUnits -= unitsKilled
+		print("{a} attacks {d}, dealing {dp} damage, killing {u} units".format(
+				a=attacker.id, d=defender.id, dp=damageDealt, u=unitsKilled))
+		if defender.nrUnits <= 0:
+			defender.army.groups.remove(defender)
+			print("{} has no units left".format(defender.id))
+
 ########
 # Main #
 ########
-armies = getArmiesFromFile("input24.txt")
-for army in armies:
-	print("Faction: " + army.faction)
-	print("Number of groups: {}".format(len(army.groups)))
-	for group in army.groups:
-		group.printGroup()
+armies = getArmiesFromFile("input24_example.txt")
+while len([army for army in armies if len(army.groups) > 0]) == 2:
+	doOneRoundOfAttacks(armies)
+# 19383 is too high
+print(sum([group.nrUnits for army in armies for group in army.groups]))
