@@ -1,6 +1,7 @@
 import re
 import sys
 
+from aoclib.distance import getManhattanDistance2
 from aoclib.sortedlist import SortedList
 
 ###########
@@ -79,7 +80,7 @@ class SearchNode:
 		# h: Heuristic estimate of remaining cost to solution (must not overestimate)
 		# f: g + h
 		self.g = self.timeSpent
-		self.h = getManhattanDistance(self.location, self.cave.targetLocation)
+		self.h = getManhattanDistance2(self.location, self.cave.targetLocation)
 		self.f = self.g + self.h
 	
 	def getSuccessorNodes(self):
@@ -224,9 +225,6 @@ def getDepthAndTargetLocationFromFile(fileName):
 			elif targetMatch:
 				target = (int(targetMatch.group(1)), int(targetMatch.group(2)))
 	return (depth, target)
-
-def getManhattanDistance(coordinateA, coordinateB):
-	return abs(coordinateA[0] - coordinateB[0]) + abs(coordinateA[1] - coordinateB[1])
 
 def getLocation(location, direction):
 	return (location[0]+direction[0], location[1]+direction[1])

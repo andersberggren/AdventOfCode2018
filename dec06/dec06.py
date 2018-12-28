@@ -1,3 +1,5 @@
+from aoclib.distance import getManhattanDistance2
+
 ###########
 # Classes #
 ###########
@@ -29,7 +31,7 @@ class Grid:
 		minDistance = None
 		closestPOI = None
 		for poi in self.poiSet:
-			distance = getManhattanDistance((x,y), (poi.x,poi.y))
+			distance = getManhattanDistance2((x,y), (poi.x,poi.y))
 			if minDistance is None or distance < minDistance:
 				minDistance = distance
 				closestPOI = poi
@@ -73,7 +75,7 @@ class Grid:
 
 	# Returns the sum of the distances from (x,y) to each PointOfInterest.
 	def getTotalDistance(self, x, y):
-		return sum([getManhattanDistance((x,y), (poi.x,poi.y)) for poi in self.poiSet])
+		return sum([getManhattanDistance2((x,y), (poi.x,poi.y)) for poi in self.poiSet])
 
 	def getXRange(self):
 		return range(self.minX, self.maxX+1)
@@ -93,9 +95,6 @@ class Grid:
 def getPointsOfInterestFromFile(fileName):
 	with open(fileName) as f:
 		return set([createPointOfInterestFromString(line) for line in f.readlines()])
-
-def getManhattanDistance(coordinateA, coordinateB):
-	return abs(coordinateA[0] - coordinateB[0]) + abs(coordinateA[1] - coordinateB[1])
 
 def createPointOfInterestFromString(s):
 	x = s.split(",")[0].strip()

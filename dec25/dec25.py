@@ -1,3 +1,5 @@
+from aoclib.distance import getManhattanDistance4
+
 ###########
 # Classes #
 ###########
@@ -14,9 +16,6 @@ class Constellation:
 def getPointsFromFile(fileName):
 	with open(fileName) as f:
 		return set([getPointFromString(x) for x in f.readlines()])
-
-def getManhattanDistance(pointA, pointB):
-	return sum([abs(pointA[i] - pointB[i]) for i in range(len(pointA))])
 
 def getPointFromString(s):
 	return tuple([int(x) for x in s.strip().split(",")])
@@ -43,7 +42,7 @@ while progress:
 		constellationA = pointToConstellation[pointA]
 		for pointB in set(points):
 			constellationB = pointToConstellation[pointB]
-			if constellationA != constellationB and getManhattanDistance(pointA, pointB) <= 3:
+			if constellationA != constellationB and getManhattanDistance4(pointA, pointB) <= 3:
 				joinConstellations(constellationA, constellationB, pointToConstellation)
 				progress = True
 				numberOfConstellations = len(set(pointToConstellation.values()))
