@@ -10,15 +10,31 @@ class AStar:
 		self.locationToToolAndTime = {}
 
 	def findBestSolution(self):
+		nCreated = 1
+		nEvaluated = 0
+		nSkipped = 0
 		while self.nodeList:
 			node = self.nodeList.pop(0)
 			if self.canSkip(node):
-				print("Skip this node. We've already evaluated one that's at least as good.")
+				nSkipped += 1
 				continue
+			else:
+				nEvaluated += 1
+				self.updateToolAndTime(node)
 			if node.isSolution():
-				print("Found solution!")
+				print("Found solution! Time spent: {}".format(node.timeSpent))
 				return node
-			self.nodeList.extend(node.getSuccessorNodes())
+			for successorNode in node.getSuccessorNodes():
+				nCreated += 1
+				if self.canSkip(successorNode):
+					nSkipped += 1
+				else:
+					self.nodeList.append(successorNode)
+				if nCreated % 10000 == 0:
+					print("Created: {c: >7}  In list: {l: >7}  Evaluated: {e: >7}  Skipped: {s: >7}".format(
+							c=nCreated, l=len(self.nodeList), e=nEvaluated, s=nSkipped))
+					print("Current node is at {l} after {t} minutes. f() = {f}".format(
+						l=node.location, t=node.timeSpent, f=node.f()))
 			self.nodeList = sorted(self.nodeList, key=lambda x: x.f())
 		print("All nodes evaluated. No solution found.")
 	
@@ -26,21 +42,19 @@ class AStar:
 		try:
 			(tool, timeSpent) = self.locationToToolAndTime[node.location]
 			if node.equippedTool == tool:
-				if node.timeSpent < timeSpent:
-					self.locationToToolAndTime[node.location] = (node.equippedTool, node.timeSpent)
-					return False
-				else:
-					return True
+				return node.timeSpent >= timeSpent
 			else:
-				# Different tool equipped
-				if node.timeSpent < timeSpent:
-					self.locationToToolAndTime[node.location] = (node.equippedTool, node.timeSpent)
-					return False
-				else:
-					return node.timeSpent >= timeSpent+7
+				return node.timeSpent >= timeSpent+7
+		except KeyError:
+			return False
+	
+	def updateToolAndTime(self, node):
+		try:
+			timeSpent = self.locationToToolAndTime[node.location][1]
+			if node.timeSpent < timeSpent:
+				self.locationToToolAndTime[node.location] = (node.equippedTool, node.timeSpent)
 		except KeyError:
 			self.locationToToolAndTime[node.location] = (node.equippedTool, node.timeSpent)
-			return False
 
 class SearchNode:
 	def __init__(self, parentNode, cave, location):
@@ -57,8 +71,8 @@ class SearchNode:
 		if self.equippedTool not in self.cave.getValidTools(self.location):
 			self.equippedTool = self.cave.getCommonTool(self.location, self.parentNode.location)
 			self.timeSpent += 7
-		print("Node at {l}, tool {tool}, time {time}".format(
-				l=self.location, tool=self.equippedTool, time=self.timeSpent))
+		#print("Node at {l}, tool {tool}, time {time}".format(
+		#		l=self.location, tool=self.equippedTool.name, time=self.timeSpent))
 	
 	def getSuccessorNodes(self):
 		successorNodes = []
@@ -206,6 +220,11 @@ cave = Cave(depth, targetLocation)
 cave.createRegion((cave.targetLocation[0], cave.targetLocation[1]+1))
 print("Total risk: {}".format(cave.getTotalRisk()))
 
+# Part 2
+# 966 is too low.
+# Added 7 minutes for changing to torch. 973 is too high.
+# 967 is not correct either
+# 968-972
 initialNode = SearchNode(None, cave, (0,0))
 aStar = AStar(initialNode)
 solutionNode = aStar.findBestSolution()
