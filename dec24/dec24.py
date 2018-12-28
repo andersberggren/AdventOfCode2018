@@ -120,7 +120,7 @@ def doOneRoundOfAttacks(armies):
 	attackersAndDefenders = getTargetSelections(armies)
 	print("Attack:")
 	for (attacker, defender) in attackersAndDefenders:
-		damageDealt = getDamage(attacker, defender)
+		damageDealt = max(getDamage(attacker, defender), 0)
 		unitsKilled = damageDealt // defender.hpPerUnit
 		defender.nrUnits -= unitsKilled
 		print("{a} attacks {d}, dealing {dp} damage, killing {u} units".format(
@@ -132,8 +132,8 @@ def doOneRoundOfAttacks(armies):
 ########
 # Main #
 ########
-armies = getArmiesFromFile("input24_example.txt")
+armies = getArmiesFromFile("input24.txt")
 while len([army for army in armies if len(army.groups) > 0]) == 2:
 	doOneRoundOfAttacks(armies)
-# 19383 is too high
-print(sum([group.nrUnits for army in armies for group in army.groups]))
+remainingUnits = sum([group.nrUnits for army in armies for group in army.groups])
+print("Remaining units: {}".format(remainingUnits))
