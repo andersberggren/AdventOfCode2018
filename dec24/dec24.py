@@ -132,7 +132,22 @@ def doOneRoundOfAttacks(armies):
 ########
 # Main #
 ########
+# Part 1
 armies = getArmiesFromFile("input24.txt")
+while len([army for army in armies if len(army.groups) > 0]) == 2:
+	doOneRoundOfAttacks(armies)
+remainingUnits = sum([group.nrUnits for army in armies for group in army.groups])
+print("Remaining units: {}".format(remainingUnits))
+
+# Part 2
+armies = getArmiesFromFile("input24.txt")
+# Boost immune system
+# High (maybe too high): 34
+# Too low: 33
+for army in armies:
+	if army.faction == "Immune System":
+		for group in army.groups:
+			group.attackPowerPerUnit += 34
 while len([army for army in armies if len(army.groups) > 0]) == 2:
 	doOneRoundOfAttacks(armies)
 remainingUnits = sum([group.nrUnits for army in armies for group in army.groups])
