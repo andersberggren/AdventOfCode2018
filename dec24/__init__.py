@@ -1,7 +1,7 @@
 from aoclib.filereader import getFileAsSingleString
 from dec24.parser import getArmiesFromString
 
-# Returns a list of Group, sorted by order of target selection.
+# Returns a list of Group, sorted by the order in which groups should select targets.
 def getGroupsInTargetSelectionOrder(armies):
 	def sortKey(group):
 		return (group.getEffectivePower(), group.initiative)
@@ -12,16 +12,16 @@ def getGroupsInTargetSelectionOrder(armies):
 def getGroupsInAttackOrder(attackersAndDefenders):
 	return sorted([x for x in attackersAndDefenders], key=lambda x: x[0].initiative, reverse=True)
 
-# Returns a list of (attacker, defender)
-def getTargetSelections(armies, attackers):
+# Returns a list of (attacker, defender), sorted by the order in which groups should attack.
+def getTargetSelections(armies):
 	attackerToDefender = {}
-	for attacker in attackers:
+	for attacker in getGroupsInTargetSelectionOrder(armies):
 		eligibleDefenders = getEnemyGroups(armies, attacker)
 		eligibleDefenders = [x for x in eligibleDefenders if x not in attackerToDefender.values()]
 		defender = getTargetSelection(attacker, eligibleDefenders)
 		if defender is not None:
 			attackerToDefender[attacker] = defender
-	return attackerToDefender.items()
+	return getGroupsInAttackOrder(attackerToDefender.items())
 
 def getTargetSelection(attacker, defenderGroups):
 	def sortKey(defender):
@@ -38,10 +38,7 @@ def getEnemyGroups(armies, myGroup):
 
 # Returns True iff at least one unit was killed, i.e. some progress was made.
 def fightOneRound(armies):
-	attackers = getGroupsInTargetSelectionOrder(armies)
-	attackersAndDefenders = getTargetSelections(armies, attackers)
-	attackersAndDefenders = getGroupsInAttackOrder(attackersAndDefenders)
-	return any([attacker.attack(defender) for (attacker, defender) in attackersAndDefenders])
+	return any([attacker.attack(defender) for (attacker, defender) in getTargetSelections(armies)])
 
 # Returns (winningArmy, remainingUnits), or (None, None) if no one will ever win.
 def fightUntilThereIsOnlyOneArmyLeft(armies):
@@ -59,24 +56,25 @@ def findMinimumBoost(inputFileAsString):
 	factionBeingBoosted = "Immune System"
 	lowValue = 0
 	highValue = None
+	highValueRemainingUnits = None
 	while highValue is None or highValue-lowValue > 1:
 		armies = getArmiesFromString(inputFileAsString)
 		if highValue is None:
-			boost = max(lowValue, 1) * 2
+			boostValue = max(lowValue, 1) * 2
 		else:
-			boost = ((lowValue+1)+(highValue-1)) // 2
+			boostValue = ((lowValue+1)+(highValue-1)) // 2
 		for army in armies:
 			if army.faction == factionBeingBoosted:
-				for group in army.groups:
-					group.attackPowerPerUnit += boost
+				army.boostAttackPowerPerUnit(boostValue)
 		(winningArmy, remainingUnits) = fightUntilThereIsOnlyOneArmyLeft(armies)
-		print("With boost={b}, {a} wins, with {u} remaining units".format(
-				b=boost, a=winningArmy, u=remainingUnits))
+		print("With boostValue={b}, {a} wins, with {u} remaining units".format(
+				b=boostValue, a=winningArmy, u=remainingUnits))
 		if winningArmy is not None and winningArmy.faction == factionBeingBoosted:
-			highValue = boost
+			highValue = boostValue
+			highValueRemainingUnits = remainingUnits
 		else:
-			lowValue = boost
-	return (highValue, remainingUnits)
+			lowValue = boostValue
+	return (highValue, highValueRemainingUnits)
 
 if __name__ == "__main__":
 	inputFileAsString = getFileAsSingleString("input24.txt")

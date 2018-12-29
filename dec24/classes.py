@@ -2,6 +2,10 @@ class Army:
 	def __init__(self, faction):
 		self.faction = faction
 		self.groups = []
+	
+	def boostAttackPowerPerUnit(self, boostValue):
+		for group in self.groups:
+			group.attackPowerPerUnit += boostValue
 
 	def __repr__(self):
 		return "Army[faction={}]".format(self.faction)
