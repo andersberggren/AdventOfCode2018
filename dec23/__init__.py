@@ -1,6 +1,7 @@
 import re
 
 from aoclib.distance import getManhattanDistance3
+from aoclib.distance import getManhattanDistance3FromCuboid
 from aoclib.sortedlist import SortedList
 
 ###########
@@ -52,7 +53,7 @@ class SearchNode:
 	def getNumberOfNanobotsInRange(self):
 		count = 0
 		for nanobot in self.nanobots:
-			if getManhattanDistanceFromBoxToPoint(self.pos, self.size, nanobot.pos) <= nanobot.radius:
+			if getManhattanDistance3FromCuboid(self.pos, self.size, nanobot.pos) <= nanobot.radius:
 				count += 1
 		return count
 	
@@ -109,14 +110,6 @@ def getNanobotFromString(s):
 	pos = tuple([int(x) for x in match.group(1).split(",")])
 	radius = int(match.group(2))
 	return Nanobot(pos, radius)
-
-def getManhattanDistanceFromBoxToPoint(boxPos, boxSize, pos):
-	distance = 0
-	for i in range(3):
-		minValue = boxPos[i]
-		maxValue = boxPos[i]+boxSize[i]-1
-		distance += max(pos[i] - maxValue, minValue - pos[i], 0)
-	return distance
 
 # Returns (pos, size), where "pos" and "size" are 3-tuples.
 def getBoundingBox(nanobots):

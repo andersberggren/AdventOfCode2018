@@ -7,11 +7,11 @@ class Test(unittest.TestCase):
 		boxPos = (3, -2, -4)
 		boxSize = (1, 3, 7)
 		pos = (4, -3, 4)
-		self.assertEqual(dec23.getManhattanDistanceFromBoxToPoint(boxPos, boxSize, pos), 4)
+		self.assertEqual(dec23.getManhattanDistance3FromCuboid(boxPos, boxSize, pos), 4)
 		pos = (-3, 1, -6)
-		self.assertEqual(dec23.getManhattanDistanceFromBoxToPoint(boxPos, boxSize, pos), 9)
+		self.assertEqual(dec23.getManhattanDistance3FromCuboid(boxPos, boxSize, pos), 9)
 		pos = (1, -1, 1)
-		self.assertEqual(dec23.getManhattanDistanceFromBoxToPoint(boxPos, boxSize, pos), 2)
+		self.assertEqual(dec23.getManhattanDistance3FromCuboid(boxPos, boxSize, pos), 2)
 	
 	def test_getBoundingBox(self):
 		nanobots = [
