@@ -20,7 +20,9 @@ def getPointsFromFile(fileName):
 def getPointFromString(s):
 	return tuple([int(x) for x in s.strip().split(",")])
 
-def tryToJoinConstellations(pointToConstellation):
+# Joins all constellations that can be joined.
+# Returns number of constellations after all joins.
+def joinAllConstellationsThatCanBeJoined(pointToConstellation):
 	progress = True
 	while progress:
 		progress = False
@@ -33,7 +35,7 @@ def tryToJoinConstellations(pointToConstellation):
 				if constellationA != constellationB and getManhattanDistance4(pointA, pointB) <= 3:
 					joinConstellations(constellationA, constellationB, pointToConstellation)
 					progress = True
-	print("Part 1: Number of constellations: {}".format(len(set(pointToConstellation.values()))))
+	return len(set(pointToConstellation.values()))
 
 def joinConstellations(constellationA, constellationB, pointToConstellation):
 	for point in constellationB.members:
@@ -46,4 +48,5 @@ def joinConstellations(constellationA, constellationB, pointToConstellation):
 ########
 if __name__ == "__main__":
 	pointToConstellation = {p: Constellation(p) for p in getPointsFromFile("input25.txt")}
-	tryToJoinConstellations(pointToConstellation)
+	numberOfConstellations = joinAllConstellationsThatCanBeJoined(pointToConstellation)
+	print("Part 1: {} constellations".format(numberOfConstellations))
