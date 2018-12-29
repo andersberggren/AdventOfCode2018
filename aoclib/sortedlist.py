@@ -1,11 +1,16 @@
 class SortedList:
-	def __init__(self):
+	def __init__(self, *, ascending=True):
 		self.head = None
+		self.ascending = ascending
 	
 	def insert(self, valueToInsert):
 		itemIterator = self.head
 		prevItem = None
-		while itemIterator is not None and itemIterator.value < valueToInsert:
+		while True:
+			if itemIterator is None \
+					or (self.ascending and valueToInsert <= itemIterator.value) \
+					or (not self.ascending and itemIterator.value <= valueToInsert):
+				break
 			prevItem = itemIterator
 			itemIterator = itemIterator.next
 		newItem = SortedList.ListItem(valueToInsert, itemIterator)

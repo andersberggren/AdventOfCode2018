@@ -97,8 +97,8 @@ class SearchNode:
 	def isSolution(self):
 		return self.location == self.cave.targetLocation
 
-	def __lt__(self, other):
-		return self.f < other.f or (self.f == other.f and self.g > other.g)
+	def __le__(self, other):
+		return self.f < other.f or (self.f == other.f and self.g >= other.g)
 
 class Direction:
 	up    = ( 0, -1)
