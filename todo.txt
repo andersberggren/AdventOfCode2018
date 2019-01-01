@@ -1,0 +1,14 @@
+dec01-dec10: ?
+dec11 - Chronal Charge
+- Slow execution. Takes several minutes.
+dec14 - Chocolate Charts
+- Slow execution. Takes > one minute.
+dec15 - Beverage Bandits
+- Automatically calculate value of Elf attack power for win.
+- Execution is slow, for a not-so-difficult problem.
+dec19 - Go With The Flow
+- Can this be solved without custom shortcuts for this particular input?
+dec21 - Chronal Conversion
+- Slow. Takes ~ one hour to complete.
+dec22 - Mode Maze
+- Slow. Takes several minutes to complete.
