@@ -2,6 +2,7 @@ import re
 
 from aoclib.distance import getManhattanDistance3
 from aoclib.distance import getManhattanDistance3FromCuboid
+from aoclib.search import AStar
 from aoclib.sortedlist import SortedList
 
 ###########
@@ -12,50 +13,18 @@ class Nanobot:
 		self.pos = pos
 		self.radius = radius
 
-class AStar:
-	def __init__(self, initialNodes):
-		self.nodeList = SortedList(ascending=False)
-		for node in initialNodes:
-			self.nodeList.insert(node)
-		self.locationToTime = {}
-
-	def findBestSolutions(self):
-		nCreated = self.nodeList.getSize()
-		nEvaluated = 0
-		solutionNodes = []
-		while not self.nodeList.isEmpty():
-			node = self.nodeList.pop()
-			nEvaluated += 1
-			if len(solutionNodes) > 0 and node < solutionNodes[0]:
-				break
-			if node.isSolution():
-				print("Found a solution!")
-				solutionNodes.append(node)
-			for successorNode in node.getSuccessorNodes():
-				nCreated += 1
-				self.nodeList.insert(successorNode)
-				#if nCreated % 1000 == 0:
-				#	print("Created: {c: >7}  In list: {l: >7}  Evaluated: {e: >7}".format(
-				#			c=nCreated, l=self.nodeList.getSize(), e=nEvaluated))
-		print("Created {c} nodes, evaluated {e} nodes".format(c=nCreated, e=nEvaluated))
-		print("Number of solutions: {}".format(len(solutionNodes)))
-		return solutionNodes
-
 class SearchNode:
 	def __init__(self, pos, size, nanobots):
 		self.pos = pos
 		self.size = size
 		self.nanobots = nanobots
-		self.nrNanobotsInRange = self.getNumberOfNanobotsInRange()
-		#print("Bounding box: {} {} In range of {}".format(
-		#		self.pos, self.size, self.nrNanobotsInRange))
-	
-	def getNumberOfNanobotsInRange(self):
-		count = 0
+		self.nrNanobotsInRange = 0
 		for nanobot in self.nanobots:
 			if getManhattanDistance3FromCuboid(self.pos, self.size, nanobot.pos) <= nanobot.radius:
-				count += 1
-		return count
+				self.nrNanobotsInRange += 1
+	
+	def getState(self):
+		return (self.pos, self.size)
 	
 	def getSuccessorNodes(self):
 		if self.isSolution():
@@ -95,9 +64,9 @@ class SearchNode:
 	def __le__(self, other):
 		return self.nrNanobotsInRange <= other.nrNanobotsInRange
 	
-	def __lt__(self, other):
-		return self.nrNanobotsInRange < other.nrNanobotsInRange
-
+	def __ne__(self, other):
+		return self.nrNanobotsInRange != other.nrNanobotsInRange
+	
 #############
 # Functions #
 #############
@@ -131,8 +100,12 @@ def part1(nanobots):
 def part2(nanobots):
 	(pos, size) = getBoundingBox(nanobots)
 	initialNode = SearchNode(pos, size, nanobots)
-	aStar = AStar([initialNode])
-	solutionNodes = aStar.findBestSolutions()
+	aStar = AStar([initialNode], ascending=False)
+	(solutionNodes, stats) = aStar.findBestSolutions()
+	print("Nodes created: {c}  Evaluated: {e}  Skipped: {s}  Remaining in list: {l}".format(
+			c=stats.created, e=stats.evaluated, s=stats.skipped,
+			l=stats.created-(stats.evaluated+stats.skipped)))
+	print("Number of solutions: {}".format(len(solutionNodes)))
 	for node in solutionNodes:
 		print("Part 2: Distance is {}".format(getManhattanDistance3((0,0,0), node.pos)))
 
