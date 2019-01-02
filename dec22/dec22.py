@@ -1,7 +1,7 @@
 import re
 import sys
 
-from aoclib.distance import getManhattanDistance2
+from aoclib.geometry import getManhattanDistance2
 from aoclib.sortedlist import SortedList
 
 ###########

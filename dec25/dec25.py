@@ -1,4 +1,4 @@
-from aoclib.distance import getManhattanDistance4
+from aoclib.geometry import getManhattanDistance4
 from aoclib.filereader import getFileAsListOfString
 
 ###########

@@ -1,4 +1,4 @@
-from aoclib.distance import getManhattanDistance2
+from aoclib.geometry import getManhattanDistance2
 
 ###########
 # Classes #
