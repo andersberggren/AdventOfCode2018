@@ -1,4 +1,5 @@
 import unittest
+
 from dec14 import dec14
 
 class TestSuite(unittest.TestCase):
@@ -65,6 +66,3 @@ class TestSuite(unittest.TestCase):
 			self.assertTrue(dec14.matchSubList(fullList, subList, offset))
 		for (fullList, subList, offset) in testDataNoMatch:
 			self.assertFalse(dec14.matchSubList(fullList, subList, offset))
-
-if __name__ == "__main__":
-	unittest.main()

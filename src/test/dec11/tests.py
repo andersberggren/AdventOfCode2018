@@ -1,4 +1,5 @@
 import unittest
+
 from dec11 import dec11
 
 class TestSuite(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestSuite(unittest.TestCase):
 			(71, (101,153),  4)
 			]
 
-	def test_getLargestDivisorLargerThanSelf(self):
+	def test_getLargestDivisorSmallerThanSelf(self):
 		testData = [
 				( 1,  1),
 				( 2,  1),
@@ -26,8 +27,8 @@ class TestSuite(unittest.TestCase):
 				(13,  1),
 				(81, 27)
 				]
-		for (input, expectedDivisor) in testData:
-			self.assertEqual(dec11.getLargestDivisorSmallerThanSelf(input), expectedDivisor)
+		for (value, expectedDivisor) in testData:
+			self.assertEqual(dec11.getLargestDivisorSmallerThanSelf(value), expectedDivisor)
 
 	def test_calcPowerLevelForSingleCell(self):
 		for (serialNumber, (x,y), expectedPowerLevel) in self.powerLevelTestData:

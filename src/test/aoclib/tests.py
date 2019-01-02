@@ -1,6 +1,6 @@
 import unittest
 
-from ..geometry import getBoundingBox, getManhattanDistance3FromBox
+from .geometry import getBoundingBox, getManhattanDistance3FromBox
 
 class Test(unittest.TestCase):
     def test_getManhattanDistance3FromBox(self):

@@ -33,10 +33,10 @@ class TestSuite(unittest.TestCase):
 
 	def test_creature(self):
 		position = (3,7)
-		type = "Elf"
-		creature = Creature(position, type)
+		creatureType = "Elf"
+		creature = Creature(position, creatureType)
 		self.assertEqual(creature.position, position)
-		self.assertEqual(creature.type, type)
+		self.assertEqual(creature.type, creatureType)
 
 	def test_world(self):
 		self.assertEqual(len(self.world.allPositions), len(self.openPositions))
