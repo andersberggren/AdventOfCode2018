@@ -33,7 +33,7 @@ def findBestUnitToRemove(polymer):
 	charToSize = {}
 	# string.ascii_uppercase = "ABC...Z"
 	for char in string.ascii_uppercase:
-		candidatePolymer = re.sub(char, "", polymer, flags=re.IGNORECASE)
+		candidatePolymer = re.sub(char, "", polymer, flags=re.IGNORECASE)  # @UndefinedVariable
 		candidatePolymer = getReducedPolymer(candidatePolymer)
 		charToSize[char] = len(candidatePolymer)
 	return sorted(charToSize.items(), key=lambda item: item[1])[0]

@@ -1,11 +1,13 @@
 import re
 
+from aoclib.filereader import getFileAsListOfString
+
 ###########
 # Classes #
 ###########
 class Guard:
-	def __init__(self, id):
-		self.id = int(id)
+	def __init__(self, guardID):
+		self.id = int(guardID)
 		self.minutesAsleep = 0
 		self.numberOfTimesAsleepDuringMinute = {}
 
@@ -45,8 +47,7 @@ class Event:
 # Reads a file and returns a list of Event (in chronological order).
 # Each line in the file represents an event.
 def getEventsFromFile(fileName):
-	with open("input04.txt") as f:
-		return [Event.createFromString(s) for s in sorted(f.readlines())]
+	return [Event.createFromString(s) for s in sorted(getFileAsListOfString(fileName))]
 
 # Processes the events in "events", and returns a dict containing data about guards
 # (key: guard ID, value: Guard object)
@@ -90,7 +91,7 @@ def findGuardThatSleptTheMostDuringASingleMinute(guards):
 		except KeyError:
 			numberOfTimesAsleep = 0
 		guardTuples.append((guard.id, minute, numberOfTimesAsleep))
-	guardTuple = sorted(guardTuples, key=lambda tuple: tuple[2], reverse=True)[0]
+	guardTuple = sorted(guardTuples, key=lambda x: x[2], reverse=True)[0]
 	print("Guard {id} slept the most during a given minute (minute {minute})".format(
 			id=guardTuple[0], minute=guardTuple[1]))
 	print("Answer to part 2: {}".format(guardTuple[0] * guardTuple[1]))

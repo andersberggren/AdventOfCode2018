@@ -11,9 +11,9 @@ def getValueOfNodePart1(integerList):
 	numberOfChildren = integerList.pop(0)
 	numberOfMetadataEntries = integerList.pop(0)
 	metadataSum = 0
-	for i in range(numberOfChildren):
+	for i in range(numberOfChildren):  # @UnusedVariable
 		metadataSum += getValueOfNodePart1(integerList)
-	for i in range(numberOfMetadataEntries):
+	for i in range(numberOfMetadataEntries):  # @UnusedVariable
 		metadataSum += integerList.pop(0)
 	return metadataSum
 

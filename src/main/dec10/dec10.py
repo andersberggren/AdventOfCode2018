@@ -49,11 +49,9 @@ def areGroupedTogether(lights):
 def hasNeighbor(position, positions):
 	x = position[0]
 	y = position[1]
-	for xIter in range(x-1, x+2):
-		for yIter in range(y-1, y+2):
-			if not (xIter == x and yIter == y) and (xIter,yIter) in positions:
-				return True
-	return False
+	return any((xIter,yIter) in positions
+	           for xIter in range(x-1, x+2) for yIter in range(y-1, y+2)
+	           if not (xIter == x and yIter == y))
 
 def printLights(lights):
 	positions = set([light.position for light in lights])

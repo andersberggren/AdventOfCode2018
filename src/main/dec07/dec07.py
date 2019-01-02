@@ -4,10 +4,10 @@ import re
 # Classes #
 ###########
 class Step:
-	def __init__(self, id):
-		self.id = id
+	def __init__(self, stepID):
+		self.id = stepID
 		# timeLeft is only used in part 2
-		self.timeLeft = 61 + ord(id) - ord('A')
+		self.timeLeft = 61 + ord(self.id) - ord('A')
 		self.isCompleted = False
 		self.dependees = set()
 
@@ -37,9 +37,9 @@ def getStepsFromFile(fileName):
 			if m:
 				idDependant = m.group(2)
 				idDependee =  m.group(1)
-				for id in [idDependant, idDependee]:
-					if id not in steps:
-						steps[id] = Step(id)
+				for stepID in [idDependant, idDependee]:
+					if stepID not in steps:
+						steps[stepID] = Step(stepID)
 				steps[idDependant].addDependee(steps[idDependee])
 			else:
 				raise RuntimeError("Line in file has incorrect format: {}".format(line))
