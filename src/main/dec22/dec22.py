@@ -2,78 +2,25 @@ import re
 import sys
 
 from aoclib.geometry import getManhattanDistance2
-from aoclib.sortedlist import SortedList
+from aoclib.search import AStar
 
 ###########
 # Classes #
 ###########
-class AStar:
-	def __init__(self, initialNodes):
-		self.nodeList = SortedList()
-		for node in initialNodes:
-			self.nodeList.insert(node)
-		self.locationToTime = {}
-
-	def findBestSolution(self):
-		nCreated = 1
-		nEvaluated = 0
-		nSkipped = 0
-		while not self.nodeList.isEmpty():
-			node = self.nodeList.pop()
-			if self.canSkip(node):
-				nSkipped += 1
-				continue
-			else:
-				nEvaluated += 1
-				self.updateToolAndTime(node)
-			if node.isSolution():
-				print("Found solution!")
-				return node
-			for successorNode in node.getSuccessorNodes():
-				nCreated += 1
-				if self.canSkip(successorNode):
-					nSkipped += 1
-				else:
-					self.nodeList.insert(successorNode)
-				if nCreated % 10000 == 0:
-					print("Created: {c: >7}  In list: {l: >7}  Evaluated: {e: >7}  Skipped: {s: >7}".format(
-							c=nCreated, l=self.nodeList.getSize(), e=nEvaluated, s=nSkipped))
-					print("Current node is at {l} after {t} minutes. f() = {f}".format(
-						l=node.location, t=node.timeSpent, f=node.f))
-		print("All nodes evaluated. No solution found.")
-	
-	def canSkip(self, node):
-		key = (node.location[0], node.location[1], node.equippedTool)
-		try:
-			return node.timeSpent >= self.locationToTime[key]
-		except KeyError:
-			return False
-	
-	def updateToolAndTime(self, node):
-		key = (node.location[0], node.location[1], node.equippedTool)
-		try:
-			timeSpent = self.locationToTime[key]
-			if node.timeSpent < timeSpent:
-				self.locationToTime[key] = node.timeSpent
-		except KeyError:
-			self.locationToTime[key] = node.timeSpent
-
 class SearchNode:
 	def __init__(self, parentNode, cave, location):
 		self.parentNode = parentNode
 		self.cave = cave
 		self.location = location
-		self.previousLocations = {self.location}
 		self.timeSpent = 0
 		self.equippedTool = Tool.torch
 		if self.parentNode is not None:
-			self.previousLocations |= self.parentNode.previousLocations
 			self.timeSpent = self.parentNode.timeSpent + 1
 			self.equippedTool = self.parentNode.equippedTool
 		if self.equippedTool not in self.cave.getValidTools(self.location):
 			self.equippedTool = self.cave.getCommonTool(self.location, self.parentNode.location)
 			self.timeSpent += 7
-		elif self.location == self.cave.targetLocation and self.equippedTool != Tool.torch:
+		if self.location == self.cave.targetLocation and self.equippedTool != Tool.torch:
 			self.equippedTool = Tool.torch
 			self.timeSpent += 7
 		# g: Cost so far
@@ -86,19 +33,28 @@ class SearchNode:
 	def getSuccessorNodes(self):
 		successorNodes = []
 		for direction in Direction.all:
-			newLocation = getLocation(self.location, direction)
+			newLocation = Direction.getNewLocation(self.location, direction)
 			if (self.parentNode is not None and newLocation == self.parentNode.location) \
-					or newLocation[0] < 0 or newLocation[1] < 0 \
-					or newLocation in self.previousLocations:
+					or newLocation[0] < 0 or newLocation[1] < 0:
 				continue
 			successorNodes.append(SearchNode(self, self.cave, newLocation))
 		return successorNodes
+	
+	def getState(self):
+		return (self.location, self.equippedTool)
 	
 	def isSolution(self):
 		return self.location == self.cave.targetLocation
 
 	def __le__(self, other):
 		return self.f < other.f or (self.f == other.f and self.g >= other.g)
+	
+	def __ne__(self, other):
+		return self.f != other.f
+	
+	def __repr__(self):
+		s = "SearchNode[location={l},timeSpent={time},equippedTool={tool}]"
+		return s.format(l=self.location, time=self.timeSpent, tool=self.equippedTool.name)
 
 class Direction:
 	up    = ( 0, -1)
@@ -106,6 +62,10 @@ class Direction:
 	left  = (-1,  0)
 	right = ( 1,  0)
 	all = [up, down, left, right]
+	
+	@staticmethod
+	def getNewLocation(location, direction):
+		return (location[0]+direction[0], location[1]+direction[1])
 
 class Cave:
 	def __init__(self, depth, targetLocation):
@@ -162,7 +122,7 @@ class Cave:
 		return self.getRegion(location).type.validTools
 	
 	def getCommonTool(self, locationA, locationB):
-		commonTools = self.getRegion(locationA).type.validTools & self.getRegion(locationB).type.validTools
+		commonTools = self.getValidTools(locationA) & self.getValidTools(locationB)
 		if len(commonTools) != 1:
 			print("Location {a} and {b} have {n} tools in common. Expected 1.". format(
 					a=locationA, b=locationB, n=len(commonTools)))
@@ -226,21 +186,15 @@ def getDepthAndTargetLocationFromFile(fileName):
 				target = (int(targetMatch.group(1)), int(targetMatch.group(2)))
 	return (depth, target)
 
-def getLocation(location, direction):
-	return (location[0]+direction[0], location[1]+direction[1])
-
 ########
 # Main #
 ########
 (depth, targetLocation) = getDepthAndTargetLocationFromFile("input22.txt")
-#depth = 510
-#targetLocation = (10,10)
 cave = Cave(depth, targetLocation)
-#cave.printCave()
 print("Total risk: {}".format(cave.getTotalRisk()))
 
 # Part 2
 initialNode = SearchNode(None, cave, (0,0))
-aStar = AStar([initialNode])
-solutionNode = aStar.findBestSolution()
+aStar = AStar([initialNode], ascending=True, debugInterval=10000)
+(solutionNode, stats) = aStar.findBestSolution()
 print("Solution found. Time to reach target: {}".format(solutionNode.timeSpent))

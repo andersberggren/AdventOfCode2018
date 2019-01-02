@@ -12,4 +12,4 @@ dec19 - Go With The Flow
 dec21 - Chronal Conversion
 - Slow. Takes ~ one hour to complete.
 dec22 - Mode Maze
-- Slow. Takes several minutes to complete.
+- Slow. Takes ~5 minutes to complete.
