@@ -1,7 +1,7 @@
 import unittest
 
 from dec15 import Creature
-from dec15.world import World, UnreachableError
+from dec15.world import World
 
 class TestSuite(unittest.TestCase):
 	# ######
@@ -81,16 +81,6 @@ class TestSuite(unittest.TestCase):
 		self.assertTrue((1,3) in squares)
 		self.assertTrue((2,2) in squares)
 
-	def test_world_getDistance(self):
-		self.assertEqual(self.world.getDistance((1,2), (2,2)), 1)
-		self.assertEqual(self.world.getDistance((2,3), (4,2)), 7)
-		self.assertEqual(self.world.getDistance((3,2), (3,5)), 5)
-		try:
-			self.world.getDistance((3,2), (1,3))
-			self.fail("Expected UnreachableError")
-		except UnreachableError:
-			pass
-
 	def test_world_isCombatOver(self):
 		self.assertFalse(self.world.isCombatOver())
 		for creature in list(self.world.positionToCreature.values()):
@@ -106,12 +96,6 @@ class TestSuite(unittest.TestCase):
 		self.assertFalse(self.world.isEmpty((1,1)))
 		self.assertFalse(self.world.isEmpty((1,2)))
 		self.assertFalse(self.world.isEmpty((100,100)))
-
-	def test_world_isReachable(self):
-		self.assertTrue(self.world.isReachable((1,2), (2,2)))
-		self.assertTrue(self.world.isReachable((2,3), (4,4)))
-		self.assertFalse(self.world.isReachable((1,2), (2,3)))
-		self.assertFalse(self.world.isReachable((1,2), (4,4)))
 
 	def test_world_existsAdjacentEnemy(self):
 		self.assertFalse(self.world.existsAdjacentEnemy(self.creatures[0]))

@@ -30,50 +30,56 @@ class World:
 	def getEnemies(self, friendType):
 		return [x for x in self.positionToCreature.values() if x.type != friendType]
 
+	def getAdjacentEnemy(self, creature):
+		adjacentSquares = self.getAdjacentSquares(creature.position)
+		# Get adjacent enemies, sorted by hit points
+		adjacentEnemies = sorted(
+			[x for x in self.getEnemies(creature.type) if x.position in adjacentSquares],
+			key=lambda x: x.hitPoints
+		)
+		if not adjacentEnemies:
+			return None
+		# If there are multiple adjacent enemies with lowest hit points,
+		# select the enemy which is first in reading order.
+		return sorted(
+			[x for x in adjacentEnemies if x.hitPoints == adjacentEnemies[0].hitPoints],
+			key=lambda x: positionSortKey(x.position)
+		)[0]
+
 	def getAdjacentSquares(self, position):
 		(x,y) = position
 		positions = [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]
-		return set([p for p in positions if p in self.allPositions])
+		return {p for p in positions if p in self.allPositions}
 
 	def getAdjacentEmptySquares(self, position):
-		return set([p for p in self.getAdjacentSquares(position) if self.isEmpty(p)])
+		return {p for p in self.getAdjacentSquares(position) if self.isEmpty(p)}
 
-	def getDistance(self, positionFrom, positionTo):
-		visitedSquares = set([positionFrom])
-		positionsAtThisDistance = set([positionFrom])
-		distance = 0
-		while len(positionsAtThisDistance) > 0:
-			if positionTo in positionsAtThisDistance:
-				return distance
-			positionsAtNextDistance = set()
-			for position in positionsAtThisDistance:
-				for nextPosition in self.getAdjacentEmptySquares(position):
-					if nextPosition not in visitedSquares:
-						visitedSquares.add(position)
-						positionsAtNextDistance.add(nextPosition)
-			positionsAtThisDistance = positionsAtNextDistance
-			distance += 1
-		raise UnreachableError("No path from {f} to {t}".format(f=positionFrom, t=positionTo))
-
+	def getClosestReachableSquare(self, positionFrom, targetSquares):
+		"""
+		Returns the closest of the squares in targetSqures that is reachable from positionFrom,
+		or None if none of the squares are reachable.
+		Arguments:
+		  positionFrom   Position (x,y)
+		  targetSquares  A set of positions (x,y)
+		"""
+		visitedSquares = {positionFrom}
+		fringe = {positionFrom}
+		while len(fringe) > 0:
+			reachableTargetSquares = fringe & targetSquares
+			if len(reachableTargetSquares) > 0:
+				return sorted(reachableTargetSquares, key=positionSortKey)[0]
+			visitedSquares |= fringe
+			fringe = {adj for f in fringe for adj in self.getAdjacentEmptySquares(f)
+			          if adj not in visitedSquares
+			}
+		return None
+	
 	def isCombatOver(self):
-		# Combat is over if there is only one creature type left
+		""" Combat is over if there is only one creature type left. """
 		return len(set([creature.type for creature in self.positionToCreature.values()])) <= 1
 
 	def isEmpty(self, position):
 		return position in self.allPositions and position not in self.positionToCreature
-
-	def isReachable(self, positionFrom, positionTo):
-		evaluated = set()
-		leftToEvaluate = set([positionFrom])
-		while len(leftToEvaluate) > 0:
-			position = leftToEvaluate.pop()
-			if position == positionTo:
-				return True
-			evaluated.add(position)
-			for adjacentPosition in self.getAdjacentEmptySquares(position):
-				if adjacentPosition not in evaluated:
-					leftToEvaluate.add(adjacentPosition)
-		return False
 
 	def existsAdjacentEnemy(self, creature):
 		for position in self.getAdjacentSquares(creature.position):
@@ -125,9 +131,6 @@ class Creature:
 		self.type = creatureType
 		self.attackPower = 3
 		self.hitPoints = 200
-
-class UnreachableError(Exception):
-	pass
 
 # Sort key for positions (x,y), to be sorted in reading order.
 # Pass this function as "key" argument to sorted(listToSort, key=positionSortKey)

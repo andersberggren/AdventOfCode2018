@@ -27,44 +27,28 @@ def doCombat(world):
 def creatureMove(world, creature):
 	if world.existsAdjacentEnemy(creature):
 		return
-	enemies = world.getEnemies(creature.type)
-	candidateSquares = set()
-	for enemy in enemies:
-		candidateSquares |= world.getAdjacentEmptySquares(enemy.position)
-	candidateSquares = set([x for x in candidateSquares if world.isReachable(creature.position, x)])
-	if not candidateSquares:
+	moveToCandidates = {
+		p for enemy in world.getEnemies(creature.type)
+		for p in world.getAdjacentEmptySquares(enemy.position)
+	}
+	moveTo = world.getClosestReachableSquare(creature.position, moveToCandidates)
+	if moveTo is None:
 		return
-	distancesAndPositions = [(x, world.getDistance(creature.position, x)) for x in candidateSquares]
-	minDistance = min([x[1] for x in distancesAndPositions])
-	candidateSquares = [x[0] for x in distancesAndPositions if x[1] == minDistance]
-	targetSquare = sorted(candidateSquares, key=positionSortKey)[0]
-	
 	adjacentSquares = world.getAdjacentEmptySquares(creature.position)
-	distancesAndPositions = [(x, world.getDistance(x, targetSquare)) for x in adjacentSquares if world.isReachable(x, targetSquare)]
-	minDistance = min([x[1] for x in distancesAndPositions])
-	candidateSquares = [x[0] for x in distancesAndPositions if x[1] == minDistance]
-	moveTo = sorted(candidateSquares, key=positionSortKey)[0]
-	world.moveCreature(creature, moveTo)
+	nextStep = world.getClosestReachableSquare(moveTo, adjacentSquares)
+	world.moveCreature(creature, nextStep)
 
 def creatureAttack(world, creature):
-	adjacentSquares = world.getAdjacentSquares(creature.position)
-	adjacentEnemies = [x for x in world.getEnemies(creature.type) if x.position in adjacentSquares]
-	if not adjacentEnemies:
-		return
-	# Sort by hit points
-	adjacentEnemies = sorted(adjacentEnemies, key=lambda x: x.hitPoints)
-	adjacentEnemies = [x for x in adjacentEnemies if x.hitPoints == adjacentEnemies[0].hitPoints]
-	# Sort by reading order
-	targetEnemy = sorted(adjacentEnemies, key=lambda x: positionSortKey(x.position))[0]
-	world.attackCreature(creature, targetEnemy)
+	targetEnemy = world.getAdjacentEnemy(creature)
+	if targetEnemy is not None:
+		world.attackCreature(creature, targetEnemy)
 
-def part1():
-	world = World.createFromString(getFileAsSingleString("input15.txt"))
-	result = doCombat(world)
-	print("Part 1 outcome: {}".format(result))
+def part1(worldAsString):
+	world = World.createFromString(worldAsString)
+	outcome = doCombat(world)
+	print("Part 1 outcome: {}".format(outcome))
 
-def part2():
-	worldAsString = getFileAsSingleString("input15.txt")
+def part2(worldAsString):
 	lowValue = Creature((0,0), "Elf").attackPower
 	highValue = None
 	highValueOutcome = None
@@ -79,22 +63,23 @@ def part2():
 		elves = [x for x in world.positionToCreature.values() if x.type == "Elf"]
 		for elf in elves:
 			elf.attackPower = elfAttackPower
-		print("Elf attack power: {}".format(elfAttackPower))
+		print("Elf attack power {l} is too low, {h} is high enough. Now try {t}...".format(
+			l=lowValue, h=highValue, t=elfAttackPower))
 		
 		outcome = doCombat(world)
 		allElvesSurvived = all(elf.hitPoints > 0 for elf in elves)
 		if allElvesSurvived:
 			highValue = elfAttackPower
 			highValueOutcome = outcome
-			print("All elves survived!")
 		else:
 			lowValue = elfAttackPower
-			print("An elf died!")
+	print("Lowest attack power with all elves surviving: {}".format(highValue))
 	print("Part 2 outcome: {}".format(highValueOutcome))
 
 ########
 # Main #
 ########
 if __name__ == "__main__":
-	part1()
-	part2()
+	worldAsString = getFileAsSingleString("input15.txt")
+	part1(worldAsString)
+	part2(worldAsString)
