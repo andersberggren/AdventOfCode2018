@@ -1,6 +1,7 @@
 import unittest
 
-from dec15.dec15 import Creature, World, UnreachableError
+from dec15 import Creature
+from dec15.world import World, UnreachableError
 
 class TestSuite(unittest.TestCase):
 	# ######
