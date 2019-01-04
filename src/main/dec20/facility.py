@@ -2,7 +2,7 @@ from aoclib.direction import Direction
 from dec20.regex import getRegexWithinParentheses, splitRegexOnBranches
 
 class Facility:
-	startPosition = (0,0)
+	startLocation = (0,0)
 	symbolToDirection = {
 		"N": Direction.up,
 		"S": Direction.down,
@@ -11,71 +11,71 @@ class Facility:
 	}
 	
 	def __init__(self):
-		# Dict. Key is room position (x,y). Value is Room object.
-		self.positionToRoom = {}
-		self.addRoom(Facility.startPosition)
+		# Dict. Key is room location (x,y). Value is Room object.
+		self.locationToRoom = {}
+		self.addRoom(Facility.startLocation)
 
-	def addRoom(self, position):
-		if position not in self.positionToRoom:
-			self.positionToRoom[position] = Room(position)
+	def addRoom(self, location):
+		if location not in self.locationToRoom:
+			self.locationToRoom[location] = Room(location)
 
-	def addDoor(self, roomPosition, direction):
+	def addDoor(self, roomLocation, direction):
 		"""
-		Adds a door from room at "roomPosition" in direction "direction".
+		Adds a door from room at "roomLocation" in direction "direction".
 		Also adds the neighboring room if it doesn't already exist.
 		"""
-		room = self.positionToRoom[roomPosition]
-		otherRoomPosition = Direction.getNewLocation(roomPosition, direction)
-		if otherRoomPosition not in self.positionToRoom:
-			self.positionToRoom[otherRoomPosition] = Room(otherRoomPosition)
-		otherRoom = self.positionToRoom[otherRoomPosition]
+		room = self.locationToRoom[roomLocation]
+		otherRoomLocation = Direction.getNewLocation(roomLocation, direction)
+		if otherRoomLocation not in self.locationToRoom:
+			self.locationToRoom[otherRoomLocation] = Room(otherRoomLocation)
+		otherRoom = self.locationToRoom[otherRoomLocation]
 		room.addConnection(otherRoom)
 
-	def exploreFacilityAccordingToRegex(self, regex, positions=None):
+	def exploreFacilityAccordingToRegex(self, regex, locations=None):
 		"""
 		Arguments:
 		  regex      Remaining regex.
-		  positions  A set of positions, where we are currently at.
-		Returns a set of positions, where we are at after exploring the regex.
+		  locations  A set of locations, where we are currently at.
+		Returns a set of locations, where we are at after exploring the regex.
 		"""
-		if positions is None:
-			positions = {Facility.startPosition}
+		if locations is None:
+			locations = {Facility.startLocation}
 		if len(regex) == 0:
-			return positions
+			return locations
 		regexList = splitRegexOnBranches(regex)
 		if len(regexList) > 1:
 			# Recursive call for each branch
-			newPositions = set()
+			newLocations = set()
 			for regexSection in regexList:
-				newPositions |= self.exploreFacilityAccordingToRegex(regexSection, positions)
-			return newPositions
+				newLocations |= self.exploreFacilityAccordingToRegex(regexSection, locations)
+			return newLocations
 		else:
 			# Single branch
 			if regex[0] == "(":
 				(regexWithinParentheses, regexTail) = getRegexWithinParentheses(regex)
-				positions = self.exploreFacilityAccordingToRegex(regexWithinParentheses, positions)
-				return self.exploreFacilityAccordingToRegex(regexTail, positions)
+				locations = self.exploreFacilityAccordingToRegex(regexWithinParentheses, locations)
+				return self.exploreFacilityAccordingToRegex(regexTail, locations)
 			else:
 				# Evaluate one symbol at a time, until "("
 				for i in range(len(regex)):
 					symbol = regex[i]
 					if symbol in Facility.symbolToDirection:
 						direction = Facility.symbolToDirection[symbol]
-						newPositions = set()
-						for position in positions:
-							self.addDoor(position, direction)
-							newPositions.add(Direction.getNewLocation(position, direction))
-						positions = newPositions
+						newLocations = set()
+						for location in locations:
+							self.addDoor(location, direction)
+							newLocations.add(Direction.getNewLocation(location, direction))
+						locations = newLocations
 					elif symbol == "(":
-						return self.exploreFacilityAccordingToRegex(regex[i:], positions)
+						return self.exploreFacilityAccordingToRegex(regex[i:], locations)
 					else:
 						raise RuntimeError("Unexpected symbol: {}".format(symbol))
-				return positions
+				return locations
 
 	def getShortestDistanceToEveryRoom(self):
 		""" Returns a dict, where key is room, and value is shortest distance to room. """
 		roomToDistance = {}
-		startRoom = self.positionToRoom[Facility.startPosition]
+		startRoom = self.locationToRoom[Facility.startLocation]
 		visitedRooms = {startRoom}
 		fringe = {startRoom}
 		currentDistance = 0
@@ -88,8 +88,8 @@ class Facility:
 		return roomToDistance
 
 class Room:
-	def __init__(self, position):
-		self.position = position
+	def __init__(self, location):
+		self.location = location
 		self.connectedRooms = set()
 
 	def addConnection(self, otherRoom):

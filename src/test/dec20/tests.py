@@ -1,6 +1,6 @@
 import unittest
 
-from dec20 import dec20
+from dec20.regex import getRegexWithinParentheses, splitRegexOnBranches
 
 class TestSuite(unittest.TestCase):
 	def test_getRegexWithinParentheses(self):
@@ -10,7 +10,7 @@ class TestSuite(unittest.TestCase):
 		]
 		for (regex, expectedRegexWithinParentheses, expectedRegexTail) in regexList:
 			message = "Regex: {}".format(regex)
-			(regexWithinParentheses, regexRemaining) = dec20.getRegexWithinParentheses(regex)
+			(regexWithinParentheses, regexRemaining) = getRegexWithinParentheses(regex)
 			self.assertEqual(regexWithinParentheses, expectedRegexWithinParentheses, message)
 			self.assertEqual(regexRemaining, expectedRegexTail, message)
 
@@ -20,5 +20,5 @@ class TestSuite(unittest.TestCase):
 			("|NS(W|E)NN|E(|WWW)S|NW|", ["", "NS(W|E)NN", "E(|WWW)S", "NW", ""])
 		]
 		for (regex, expectedRegexList) in testdata:
-			regexList = dec20.splitRegexOnBranches(regex)
+			regexList = splitRegexOnBranches(regex)
 			self.assertEqual(regexList, expectedRegexList)
