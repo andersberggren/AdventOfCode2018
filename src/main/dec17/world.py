@@ -1,8 +1,3 @@
-import re
-
-###########
-# Classes #
-###########
 class World:
 	def __init__(self):
 		self.waterSpring = (500, 0)
@@ -19,14 +14,8 @@ class World:
 		for x in range(topLeftX, topLeftX+width):
 			for y in range(topLeftY, topLeftY+height):
 				self.clay.add((x,y))
-		if self.minY is None:
-			self.minY = topLeftY
-		else:
-			self.minY = min(self.minY, topLeftY)
-		if self.maxY is None:
-			self.maxY = topLeftY+height-1
-		else:
-			self.maxY = max(self.maxY, topLeftY+height-1)
+		self.minY = topLeftY if self.minY is None else min(self.minY, topLeftY)
+		self.maxY = topLeftY+height-1 if self.maxY is None else max(self.maxY, topLeftY+height-1)
 
 	def letWaterFlow(self):
 		newPositionsToEvaluate = {self.waterSpring}
@@ -38,9 +27,11 @@ class World:
 				newPositionsToEvaluate |= self.letWaterFlowSideways(pos)
 				newPositionsToEvaluate |= self.letWaterSettle(pos)
 
-	# Water spreads downwards.
-	# Returns a set of positions that needs to be evaluated during next iteration.
 	def letWaterFlowDown(self, pos):
+		"""
+		Water spreads downwards.
+		Returns a set of positions that needs to be evaluated during next iteration.
+		"""
 		newPositionsToEvaluate = set()
 		while True:
 			pos = getPositionBelow(pos)
@@ -50,9 +41,11 @@ class World:
 			newPositionsToEvaluate.add(pos)
 		return newPositionsToEvaluate
 
-	# Water spreads sideways, if directly above clay or settled water.
-	# Returns a set of positions that needs to be evaluated during next iteration.
 	def letWaterFlowSideways(self, pos):
+		"""
+		Water spreads sideways, if directly above clay or settled water.
+		Returns a set of positions that needs to be evaluated during next iteration.
+		"""
 		newPositionsToEvaluate = set()
 		if not self.hasSupportFromBelow(pos):
 			return set()
@@ -74,9 +67,11 @@ class World:
 				break
 		return newPositionsToEvaluate
 
-	# Water settles, if supported from left and right and below.
-	# Returns a set of positions that needs to be evaluated during next iteration.
 	def letWaterSettle(self, pos):
+		"""
+		Water settles, if supported from left and right and below.
+		Returns a set of positions that needs to be evaluated during next iteration.
+		"""
 		supportRight = False
 		supportLeft = False
 		while not supportRight:
@@ -124,33 +119,6 @@ class World:
 		posRight = getPositionRight(pos)
 		return posRight in self.clay or posRight in self.waterSettled
 
-#############
-# Functions #
-#############
-def getWorldFromFile(fileName):
-	world = World()
-	with open(fileName) as f:
-		for line in f.readlines():
-			(x, y, width, height) = stringToRectangle(line)
-			world.addClay(x, y, width, height)
-	return world
-
-# Reads a string and returns (x, y, width, height)
-def stringToRectangle(s):
-	xMatch = re.search("x=(\d+)(..(\d+))?", s)
-	yMatch = re.search("y=(\d+)(..(\d+))?", s)
-	x = int(xMatch.group(1))
-	if xMatch.group(3) is None:
-		width = 1
-	else:
-		width = int(xMatch.group(3)) + 1 - x
-	y = int(yMatch.group(1))
-	if yMatch.group(3) is None:
-		height = 1
-	else:
-		height = int(yMatch.group(3)) + 1 - y
-	return (x, y, width, height)
-
 def getPositionAbove(pos):
 	return (pos[0], pos[1]-1)
 
@@ -162,33 +130,3 @@ def getPositionLeft(pos):
 
 def getPositionRight(pos):
 	return (pos[0]+1, pos[1])
-
-def printWorld(world):
-	minX = min([pos[0] for pos in world.clay])
-	maxX = max([pos[0] for pos in world.clay])
-	maxY = max([pos[1] for pos in world.clay])
-	for y in range(maxY+1):
-		for x in range(minX, maxX+1):
-			position = (x,y)
-			symbol = " "
-			if position in world.clay:
-				symbol = "#"
-			elif position == world.waterSpring:
-				symbol = "+"
-			elif position in world.waterSettled:
-				symbol = "~"
-			elif position in world.waterPassed:
-				symbol = "|"
-			print(symbol, end="")
-		print()
-
-########
-# Main #
-########
-world = getWorldFromFile("input17.txt")
-world.letWaterFlow()
-allWaterPositions = world.waterSettled | world.waterPassed
-part1Answer = len([1 for (x,y) in allWaterPositions if y >= world.minY and y <= world.maxY])
-print("Part 1. Number of squares with water: {}".format(part1Answer))
-part2Answer = len([1 for (x,y) in world.waterSettled if y >= world.minY and y <= world.maxY])
-print("Part 2. Number of squares with settled water: {}".format(part2Answer))
