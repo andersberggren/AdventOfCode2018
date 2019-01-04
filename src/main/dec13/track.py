@@ -4,43 +4,13 @@ class TrackSystem:
 	def __init__(self):
 		self.grid = {}
 		self.carts = []
-
-	def addTrackAndOrCart(self, x, y, symbol):
-		position = (x,y)
-		positionToTheLeft = (x-1,y)
-		directions = set()
-		if symbol == "|":
-			directions.add(Direction.up)
-			directions.add(Direction.down)
-		elif symbol == "-":
-			directions.add(Direction.left)
-			directions.add(Direction.right)
-		elif symbol == "/":
-			if positionToTheLeft in self.grid and Direction.right in self.grid[positionToTheLeft]:
-				directions.add(Direction.left)
-				directions.add(Direction.up)
-			else:
-				directions.add(Direction.right)
-				directions.add(Direction.down)
-		elif symbol == "\\":
-			if positionToTheLeft in self.grid and Direction.right in self.grid[positionToTheLeft]:
-				directions.add(Direction.left)
-				directions.add(Direction.down)
-			else:
-				directions.add(Direction.right)
-				directions.add(Direction.up)
-		elif symbol == "+":
-			directions.add(Direction.left)
-			directions.add(Direction.right)
-			directions.add(Direction.up)
-			directions.add(Direction.down)
-		else:
-			cart = Cart.createCart(position, symbol)
-			self.carts.append(cart)
-			directions.add(cart.direction)
-			directions.add(Direction.getOppositeDirection(cart.direction))
-		self.grid[(x,y)] = directions
-
+	
+	def addTrack(self, position, directions):
+		self.grid[position] = directions
+	
+	def addCart(self, cart):
+		self.carts.append(cart)
+	
 	# Moves all carts one step.
 	def tick(self):
 		for cart in sorted(self.carts):
@@ -49,24 +19,12 @@ class TrackSystem:
 			numberOfPositions = len(set([c.position for c in self.carts]))
 			if numberOfPositions < numberOfCarts:
 				print("Collision at {}".format(cart.position))
-				self.removeCartsAt(cart.position)
+				# Remove carts at collision position
+				self.carts = [x for x in self.carts if x.position != cart.position]
 			else:
 				cart.turn(self.grid[cart.position])
 
-	def removeCartsAt(self, collisionPosition):
-		self.carts = [cart for cart in self.carts if cart.position != collisionPosition]
-
 class Cart:
-	symbolToDirection = {
-		"<": Direction.left,
-		">": Direction.right,
-		"^": Direction.up,
-		"v": Direction.down
-	}
-	directionToSymbol = {}
-	for (symbol, direction) in symbolToDirection.items():
-		directionToSymbol[direction] = symbol
-
 	# Instance variables:
 	# position     (x,y)-position.
 	# direction    (x,y), where one is 0, and the other is -1 or +1.
@@ -86,7 +44,8 @@ class Cart:
 	# 2. If the cart can continue to move forward, it keeps its current direction.
 	# 3. The only remaining option is to turn left or right, along the track.
 	def turn(self, directions):
-		if Direction.isIntersection(directions):
+		isIntersection = all(d in directions for d in Direction.all)
+		if isIntersection:
 			nextTurn = self.futureTurns.pop(0)
 			self.futureTurns.append(nextTurn)
 			nextTurn()
@@ -116,7 +75,3 @@ class Cart:
 			return False
 		else:
 			return self.position[0] < other.position[0]
-
-	@staticmethod
-	def createCart(startPosition, symbol):
-		return Cart(startPosition, Cart.symbolToDirection[symbol])
