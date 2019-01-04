@@ -1,6 +1,7 @@
 from aoclib.direction import Direction
 from aoclib.filereader import getFileAsSingleString
 from dec20.facility import Facility
+from dec20.regex import getRegexWithinParentheses, splitRegexOnBranches
 
 #############
 # Functions #
@@ -42,42 +43,6 @@ def exploreFacilityAccordingToRegex(facility, regex, positions):
 				else:
 					raise RuntimeError("Unexpected symbol: {}".format(symbol))
 			return positions
-
-# Returns (regexWithinParentheses, regexTail)
-def getRegexWithinParentheses(regex):
-	if regex[0] != "(":
-		raise RuntimeError("Expected regex to start with \"(\", but was \"{}\"".format(regex[0]))
-	# "balance" is number of "(" minus number of ")"
-	balance = 1
-	i = 1
-	while balance > 0:
-		if regex[i] == "(":
-			balance += 1
-		elif regex[i] == ")":
-			balance -= 1
-		i += 1
-	regexWithinParentheses = regex[1:i-1]
-	regexTail = regex[i:]
-	return (regexWithinParentheses, regexTail)
-
-# Returns a list of regex
-def splitRegexOnBranches(regex):
-	regexList = []
-	balance = 0
-	i = 0
-	while i < len(regex):
-		if regex[i] == "|" and balance == 0:
-			regexList.append(regex[:i])
-			regex = regex[i+1:]
-			i = 0
-		else:
-			if regex[i] == "(":
-				balance += 1
-			elif regex[i] == ")":
-				balance -= 1
-			i += 1
-	regexList.append(regex)
-	return regexList
 
 ########
 # Main #
