@@ -1,6 +1,6 @@
+from aoclib.direction import Direction
 from aoclib.geometry import getManhattanDistance2
 from dec22.cave import Tool
-from dec22.direction import Direction
 
 class SearchNode:
 	def __init__(self, parentNode, cave, location):
