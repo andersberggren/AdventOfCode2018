@@ -18,3 +18,7 @@ class Direction:
 	@staticmethod
 	def getDirectionToTheRight(direction):
 		return (-direction[1], direction[0])
+
+	@staticmethod
+	def getNewLocation(location, direction):
+		return (location[0]+direction[0], location[1]+direction[1])

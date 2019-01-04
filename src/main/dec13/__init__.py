@@ -1,4 +1,4 @@
-from dec13.direction import Direction
+from aoclib.direction import Direction
 from dec13.parser import Parser
 from dec13.track import TrackSystem, Cart
 

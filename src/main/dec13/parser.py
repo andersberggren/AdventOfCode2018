@@ -1,5 +1,5 @@
+from aoclib.direction import Direction
 from aoclib.filereader import getFileAsListOfString
-from dec13.direction import Direction
 from dec13.track import TrackSystem, Cart
 
 class Parser:

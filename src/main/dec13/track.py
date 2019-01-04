@@ -1,4 +1,4 @@
-from dec13.direction import Direction
+from aoclib.direction import Direction
 
 class TrackSystem:
 	def __init__(self):
@@ -37,7 +37,7 @@ class Cart:
 
 	# Updates the carts position, by moving it one step in the direction it is currently facing.
 	def move(self):
-		self.position = (self.position[0]+self.direction[0], self.position[1]+self.direction[1])
+		self.position = Direction.getNewLocation(self.position, self.direction)
 
 	# Turns the cart, according to the first applicable rule below:
 	# 1. If the cart is at an intersection, it turns according to self.futureTurns
