@@ -1,7 +1,7 @@
 dec09 - Marble Mania
 - Slow execution. Part 2 takes more than 20 seconds.
 dec11 - Chronal Charge
-- Slow execution. Takes several minutes.
+- Slow execution. Takes 3-4 minutes.
 dec14 - Chocolate Charts
 - Slow execution. Takes > one minute.
 dec19 - Go With The Flow

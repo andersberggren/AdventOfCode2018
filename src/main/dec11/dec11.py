@@ -76,15 +76,27 @@ def getLargestDivisorSmallerThanSelf(x):
 	return largestDivisor
 
 def findLargestTotalPower(grid):
-	bestSoFar = None
+	sizeCoordTotalPower = []
 	for i in range(1, grid.size+1):
+		if canSkip(i, sizeCoordTotalPower):
+			print("Skipping {i}x{i}".format(i=i))
+			continue
 		(coord, totalPower) = grid.getLargestTotalPower(i)
+		sizeCoordTotalPower.append((i, coord, totalPower))
 		print("Among all {i}x{i} squares, the one at {coord} has the highest total power: {tp}".format(
 				i=i, coord=coord, tp=totalPower), flush=True)
-		if bestSoFar is None or totalPower > bestSoFar[2]:
-			bestSoFar = (coord, i, totalPower)
+		bestSoFar = sorted(sizeCoordTotalPower, key=lambda x: x[2], reverse=True)[0]
 		print("So far, the {size}x{size} square at {coord} has the highest total power: {tp}".format(
-				size=bestSoFar[1], coord=bestSoFar[0], tp=bestSoFar[2]), flush=True)
+				size=bestSoFar[0], coord=bestSoFar[1], tp=bestSoFar[2]), flush=True)
+
+def canSkip(squareSize, sizeCoordTotalPower):
+	if not sizeCoordTotalPower:
+		return False
+	toBeat = sorted(sizeCoordTotalPower, key=lambda x: x[2], reverse=True)[0][2]
+	return any(
+		squareSize % subSquareSize == 0 and (squareSize//subSquareSize)**2 * totalPower < toBeat
+		for (subSquareSize, coord, totalPower) in sizeCoordTotalPower  # @UnusedVariable
+	)
 
 ########
 # Main #
