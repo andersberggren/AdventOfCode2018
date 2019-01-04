@@ -1,62 +1,10 @@
-###########
-# Classes #
-###########
-class Facility:
-	def __init__(self):
-		# Dict. Key is room position (x,y). Value is Room object.
-		self.positionToRoom = {}
-		self.addRoom((0,0))
-
-	def addRoom(self, position):
-		if position not in self.positionToRoom:
-			self.positionToRoom[position] = Room(position)
-
-	# Adds a door from room at "roomPosition" in direction "direction".
-	# Also adds the neighboring room if it doesn't already exist.
-	def addDoor(self, roomPosition, direction):
-		room = self.positionToRoom[roomPosition]
-		otherRoomPosition = (roomPosition[0]+direction[0], roomPosition[1]+direction[1])
-		if otherRoomPosition not in self.positionToRoom:
-			self.positionToRoom[otherRoomPosition] = Room(otherRoomPosition)
-		otherRoom = self.positionToRoom[otherRoomPosition]
-		room.addConnection(otherRoom)
-
-class Room:
-	def __init__(self, position):
-		self.position = position
-		self.connectedRooms = set()
-
-	def addConnection(self, otherRoom):
-		self.connectedRooms.add(otherRoom)
-		otherRoom.connectedRooms.add(self)
-
-class Direction:
-	north = ( 0, -1)
-	south = ( 0,  1)
-	east =  ( 1,  0)
-	west =  (-1,  0)
-	all = set([north, south, east, west])
-
-	@staticmethod
-	def getDirectionFromSymbol(symbol):
-		if symbol == "N":
-			return Direction.north
-		elif symbol == "S":
-			return Direction.south
-		elif symbol == "E":
-			return Direction.east
-		elif symbol == "W":
-			return Direction.west
-		else:
-			raise ValueError("Invalid symbol: {}".format(symbol))
+from aoclib.direction import Direction
+from aoclib.filereader import getFileAsSingleString
+from dec20.facility import Facility
 
 #############
 # Functions #
 #############
-def readRegexFromFile(fileName):
-	with open(fileName) as f:
-		return f.read().lstrip("^").rstrip().rstrip("$")
-
 # Arguments:
 #   facility   The facility to explore.
 #   regex      Remaining regex.
@@ -82,12 +30,12 @@ def exploreFacilityAccordingToRegex(facility, regex, positions):
 			# Evaluate one symbol at a time, until "("
 			for i in range(len(regex)):
 				symbol = regex[i]
-				if symbol in ["N", "S", "E", "W"]:
-					direction = Direction.getDirectionFromSymbol(symbol)
+				if symbol in Facility.symbolToDirection:
+					direction = Facility.symbolToDirection[symbol]
 					newPositions = set()
 					for position in positions:
 						facility.addDoor(position, direction)
-						newPositions.add((position[0]+direction[0], position[1]+direction[1]))
+						newPositions.add(Direction.getNewLocation(position, direction))
 					positions = newPositions
 				elif symbol == "(":
 					return exploreFacilityAccordingToRegex(facility, regex[i:], positions)
@@ -131,30 +79,15 @@ def splitRegexOnBranches(regex):
 	regexList.append(regex)
 	return regexList
 
-# Returns a dict, where key is room, and value is shortest distance to room.
-def getShortestDistanceToEveryRoom(facility):
-	roomToDistance = {}
-	startRoom = facility.positionToRoom[(0,0)]
-	visitedRooms = set([startRoom])
-	fringe = set([startRoom])
-	currentDistance = 0
-	while len(fringe) > 0:
-		for room in fringe:
-			roomToDistance[room] = currentDistance
-		fringe = set(r2 for r in fringe for r2 in r.connectedRooms if r2 not in visitedRooms)
-		visitedRooms |= fringe
-		currentDistance += 1
-	return roomToDistance
-
 ########
 # Main #
 ########
 if __name__ == "__main__":
 	facility = Facility()
-	regex = readRegexFromFile("input20.txt")
-	positions = set([(0,0)])
+	regex = getFileAsSingleString("input20.txt").lstrip("^").rstrip().rstrip("$")
+	positions = {(0,0)}
 	exploreFacilityAccordingToRegex(facility, regex, positions)
-	roomToDistance = getShortestDistanceToEveryRoom(facility)
+	roomToDistance = facility.getShortestDistanceToEveryRoom()
 	# Part 1
 	maxDistance = max(x for x in roomToDistance.values())
 	print("Shortest distance to most distant room: {}".format(maxDistance))
